@@ -11,3 +11,4 @@ vcpu_time_info            |      32      32      32      32
 vcpu_info                 |      48      48      64      64
 arch_shared_info          |       0       0      28      48
 shared_info               |    1096    1096    2376    3168
+
