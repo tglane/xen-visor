@@ -120,7 +120,7 @@ void play_dead(void)
      * this case, heap corruption or #PF can occur (when heap debugging is
      * enabled). For example, even printk() can involve tasklet scheduling,
      * which touches per-cpu vars.
-     * 
+     *
      * Consider very carefully when adding code to *dead_idle. Most hypervisor
      * subsystems are unsafe to call.
      */
@@ -822,6 +822,7 @@ int arch_set_info_guest(
     struct page_info *cr3_page = NULL;
     int rc = 0;
 #endif
+  uint8_t node_id = cpu_to_node(v->processor);
 
     /* The context is a compat-mode one if the target domain is compat-mode;
      * we expect the tools to DTRT even in compat-mode callers. */
@@ -1185,6 +1186,9 @@ int arch_set_info_guest(
 
     if ( v->vcpu_id == 0 )
         update_domain_wallclock_time(d);
+
+    if(d->domain_id != 0 && is_pv_domain(d))
+        shared_info(d, vcpu_to_pnode)[v->vcpu_id] = node_id;
 
     /* Don't redo final setup */
     v->is_initialised = 1;
@@ -2200,7 +2204,7 @@ void vcpu_kick(struct vcpu *v)
      * pending flag. These values may fluctuate (after all, we hold no
      * locks) but the key insight is that each change will cause
      * evtchn_upcall_pending to be polled.
-     * 
+     *
      * NB2. We save the running flag across the unblock to avoid a needless
      * IPI for domains that we IPI'd to unblock.
      */

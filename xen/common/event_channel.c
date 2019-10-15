@@ -1,15 +1,15 @@
 /******************************************************************************
  * event_channel.c
- * 
+ *
  * Event notifications from VIRQs, PIRQs, and other domains.
- * 
+ *
  * Copyright (c) 2003-2006, K A Fraser.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; If not, see <http://www.gnu.org/licenses/>.
  */
@@ -101,6 +101,7 @@ static bool virq_is_global(unsigned int virq)
     case VIRQ_DEBUG:
     case VIRQ_XENOPROF:
     case VIRQ_XENPMU:
+    case VIRQ_TOPOLOGY:
         return false;
 
     case VIRQ_ARCH_0 ... VIRQ_ARCH_7:
@@ -328,7 +329,7 @@ static long evtchn_bind_interdomain(evtchn_bind_interdomain_t *bind)
     lchn->u.interdomain.remote_port = rport;
     lchn->state                     = ECS_INTERDOMAIN;
     evtchn_port_init(ld, lchn);
-    
+
     rchn->u.interdomain.remote_dom  = ld;
     rchn->u.interdomain.remote_port = lport;
     rchn->state                     = ECS_INTERDOMAIN;
@@ -347,7 +348,7 @@ static long evtchn_bind_interdomain(evtchn_bind_interdomain_t *bind)
     spin_unlock(&ld->event_lock);
     if ( ld != rd )
         spin_unlock(&rd->event_lock);
-    
+
     rcu_unlock_domain(rd);
 
     return rc;

@@ -93,6 +93,8 @@ static inline void __nodes_clear(nodemask_t *dstp, int nbits)
 	bitmap_zero(dstp->bits, nbits);
 }
 
+#define node_isset(node, nodemask) test_bit((node), (nodemask).bits)
+
 static inline bool nodemask_test(unsigned int node, const nodemask_t *dst)
 {
     return test_bit(node, dst->bits);

@@ -128,7 +128,7 @@ static void increase_reservation(struct memop_args *a)
         }
 
         page = alloc_domheap_pages(d, a->extent_order, a->memflags);
-        if ( unlikely(page == NULL) ) 
+        if ( unlikely(page == NULL) )
         {
             gdprintk(XENLOG_INFO, "Could not allocate order=%d extent: "
                     "id=%d memflags=%x (%ld of %d)\n",
@@ -137,7 +137,7 @@ static void increase_reservation(struct memop_args *a)
             goto out;
         }
 
-        /* Inform the domain of the new page's machine address. */ 
+        /* Inform the domain of the new page's machine address. */
         if ( !paging_mode_translate(d) &&
              !guest_handle_is_null(a->extent_list) )
         {
@@ -343,7 +343,7 @@ int guest_remove_page(struct domain *d, unsigned long gmfn)
 
         return -EINVAL;
     }
-            
+
 #ifdef CONFIG_X86
     if ( p2m_is_shared(p2mt) )
     {
@@ -438,7 +438,7 @@ static void decrease_reservation(struct memop_args *a)
             t.gfn = gmfn;
             t.d = a->domain->domain_id;
             t.order = a->extent_order;
-        
+
             __trace_var(TRC_MEM_DECREASE_RESERVATION, 0, sizeof(t), &t);
         }
 
@@ -638,7 +638,7 @@ static long memory_exchange(XEN_GUEST_HANDLE_PARAM(xen_memory_exchange_t) arg)
                 {
                     put_gfn(d, gmfn + k);
                     rc = -ENOMEM;
-                    goto fail; 
+                    goto fail;
                 }
 #else /* !CONFIG_X86 */
                 mfn = gfn_to_mfn(d, _gfn(gmfn + k));
@@ -1565,6 +1565,64 @@ long do_memory_op(unsigned long cmd, XEN_GUEST_HANDLE_PARAM(void) arg)
         xfree(tmp.vdistance);
         xfree(tmp.vmemrange);
         xfree(tmp.vcpu_to_vnode);
+        break;
+    }
+
+    case XENMEM_get_numainfo:
+    {
+        int i, j, num_nodes;
+        unsigned int *distance, *memnode_map;
+        unsigned long *memranges;
+        struct xen_numa_topology_info topology;
+
+        if(copy_from_guest(&topology, arg, 1))
+            return -EFAULT;
+
+        num_nodes = num_online_nodes();
+        if(num_nodes > XEN_NUMNODES)
+            num_nodes = XEN_NUMNODES;
+
+        distance = xmalloc_array(unsigned int, XEN_NUMNODES * XEN_NUMNODES);
+        memnode_map = xmalloc_array(unsigned int, XEN_NUMNODES);
+        memranges = xmalloc_array(unsigned long, 2 * num_nodes);
+
+        if(distance == NULL || memranges == NULL || memnode_map == NULL)
+        {
+            rc = -ENOMEM;
+            goto numainfo_out;
+        }
+
+        rc = -EFAULT;
+
+        for(i = 0; i < num_nodes; i++)
+        {
+            for(j = 0; j < num_nodes; j++)
+            {
+                distance[i * XEN_NUMNODES + j] = __node_distance(i, j);
+            }
+                memranges[2 * i] = node_start_pfn(i);
+                memranges[2 * i + 1] = node_spanned_pages(i);
+                memnode_map[i] = node_isset(i, curr_d->node_affinity);
+                //memnode_map[i] = nodemask_test(i, curr_d->node_affinity);
+        }
+
+        if(copy_to_guest(topology.distance, distance, XEN_NUMNODES * XEN_NUMNODES) != 0)
+            goto numainfo_out;
+
+        if ( copy_to_guest(topology.memnode_map, memnode_map, XEN_NUMNODES) != 0 )
+    		    goto numainfo_out;
+
+    	  if ( copy_to_guest(topology.memranges, memranges, 2 * num_nodes) != 0 )
+    		    goto numainfo_out;
+
+        topology.nr_nodes = num_nodes;
+        topology.nr_cpus = curr_d->max_vcpus;
+        rc = __copy_to_guest(arg, &topology, 1) ? -EFAULT : 0;
+
+numainfo_out:
+        xfree(distance);
+        xfree(memnode_map);
+        xfree(memranges);
         break;
     }
 

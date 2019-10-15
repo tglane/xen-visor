@@ -1496,6 +1496,8 @@ static void schedule(void)
     spinlock_t           *lock;
     struct task_slice     next_slice;
     int cpu = smp_processor_id();
+    struct domain *domain;
+    uint8_t current_node, last_node;
 
     ASSERT_NOT_IN_ATOMIC();
 
@@ -1591,6 +1593,19 @@ static void schedule(void)
         sched_move_irqs(next);
 
     vcpu_periodic_timer_work(next);
+
+    domain = next->domain;
+    if(domain->domain_id != 0 && !is_idle_domain(domain) && is_pv_domain(domain))
+    {
+        last_node = shared_info(domain, vcpu_to_pnode)[next->vcpu_id];
+        current_node = cpu_to_node(cpu);
+
+        if(last_node != current_node)
+        {
+            shared_info(domain, vcpu_to_pnode)[next->vcpu_id] = current_node;
+            send_guest_vcpu_virq(next, VIRQ_TOPOLOGY);
+        }
+    }
 
     context_switch(prev, next);
 }

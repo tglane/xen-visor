@@ -56,6 +56,7 @@ defines = [ "__arm__",
             "xen_pfn_to_cr3",
             "xen_cr3_to_pfn",
             "XEN_LEGACY_MAX_VCPUS",
+            "XEN_NUMNODES",
             "MAX_GUEST_CMDLINE" ];
 
 # Architectures which must be compatible, i.e. identical
