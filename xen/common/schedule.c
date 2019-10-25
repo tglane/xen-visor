@@ -38,6 +38,11 @@
 #include <xsm/xsm.h>
 #include <xen/err.h>
 
+#include <public/domctl.h> // include to calc domain load via getdomaininfo() (maybe not necessary)
+/* time stamp in ns from last domain schedule */
+s_time_t last_timestamp = 0;
+
+
 /* opt_sched: scheduler - default to configured value */
 static char __initdata opt_sched[10] = CONFIG_SCHED_DEFAULT;
 string_param("sched", opt_sched);
@@ -1480,6 +1485,51 @@ static void vcpu_periodic_timer_work(struct vcpu *v)
     set_timer(&v->periodic_timer, periodic_next_event);
 }
 
+/**
+ * Calculate cpu load percentage of a domains vcpus
+ * Author: timo.glane@gmail.com
+ */
+static s_time_t calc_domain_vcpu_pct(struct domain* curr, struct domain* last, s_time_t now, s_time_t old)
+{
+    struct xen_domctl_getdomaininfo curr_info;
+    struct xen_domctl_getdomaininfo last_info;
+    s_time_t ns_elapsed;
+
+    if(curr == NULL) return 0.00;
+    if(last == NULL) return 0.00;
+
+    getdomaininfo(curr, &curr_info);
+    getdomaininfo(last, &last_info);
+
+    ns_elapsed = now - old;
+    /* Idea taken from tools/xenstat/xentop/xentop.c::get_cpu_pct(...) */
+    return ((curr_info.cpu_time - last_info.cpu_time) * 100) / ns_elapsed;
+}
+
+/**
+ * Update entry of currently scheduled domain in data structure containing last load status of each domain
+ * Author: timo.glane@gmail.com
+ */
+static void update_domain_ressource_load(struct domain* curr, s_time_t pct, uint64_t mem_load)
+{
+    // TODO implement data structure to store load of cpu and memory usage AND update the structure with values pct and mem_load
+}
+
+/**
+ * Calculate 
+ */
+static uint64_t calc_domain_curr_mem_load(struct domain* curr)
+{
+    struct xen_domctl_getdomaininfo curr_info;
+
+    if(curr == NULL) return 0;
+
+    getdomaininfo(curr, &curr_info);
+    
+    // return curr->tot_pages * curr->handle->page_size
+    return curr_info.tot_pages * curr_info.handle.page_size;
+}
+
 /*
  * The main function
  * - deschedule the current domain (scheduler independent).
@@ -1498,6 +1548,8 @@ static void schedule(void)
     int cpu = smp_processor_id();
     struct domain *domain;
     uint8_t current_node, last_node;
+    s_time_t domain_pct;
+    uint64_t domain_mem_load;
 
     ASSERT_NOT_IN_ATOMIC();
 
@@ -1595,6 +1647,12 @@ static void schedule(void)
     vcpu_periodic_timer_work(next);
 
     domain = next->domain;
+
+    domain_pct = calc_domain_vcpu_pct(domain, prev->domain, now, last_timestamp);
+    domain_mem_load = calc_domain_curr_mem_load(domain);
+    update_domain_ressource_load(domain, domain_pct, domain_mem_load;
+    last_timestamp = now;
+
     if(domain->domain_id != 0 && !is_idle_domain(domain) && is_pv_domain(domain))
     {
         last_node = shared_info(domain, vcpu_to_pnode)[next->vcpu_id];
