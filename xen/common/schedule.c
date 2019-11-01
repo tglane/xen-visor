@@ -1516,7 +1516,8 @@ static void update_domain_ressource_load(struct domain* curr, s_time_t pct, uint
 }
 
 /**
- * Calculate 
+ * Calculate memory load of a domain
+ * Author: timo.glane@gmail.comd
  */
 static uint64_t calc_domain_curr_mem_load(struct domain* curr)
 {
@@ -1648,11 +1649,15 @@ static void schedule(void)
 
     domain = next->domain;
 
+    /*** Update vcpu and mem load of current domain ***/
     domain_pct = calc_domain_vcpu_pct(domain, prev->domain, now, last_timestamp);
     domain_mem_load = calc_domain_curr_mem_load(domain);
     update_domain_ressource_load(domain, domain_pct, domain_mem_load;
     last_timestamp = now;
 
+    /*** Update max_vcpus and mex_mem of each domain if necessary ***/
+
+    /*** XPV integration ***/
     if(domain->domain_id != 0 && !is_idle_domain(domain) && is_pv_domain(domain))
     {
         last_node = shared_info(domain, vcpu_to_pnode)[next->vcpu_id];
@@ -1664,6 +1669,7 @@ static void schedule(void)
             send_guest_vcpu_virq(next, VIRQ_TOPOLOGY);
         }
     }
+    /*** XPV integration ***/
 
     context_switch(prev, next);
 }
