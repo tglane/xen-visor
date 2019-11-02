@@ -1528,7 +1528,7 @@ static uint64_t calc_domain_curr_mem_load(struct domain* curr)
     getdomaininfo(curr, &curr_info);
     
     // return curr->tot_pages * curr->handle->page_size
-    return curr_info.tot_pages * curr_info.handle->page_size;
+    return curr_info.tot_pages * PAGE_SIZE;
 }
 
 /*
