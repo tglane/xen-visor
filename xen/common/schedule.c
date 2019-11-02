@@ -1528,7 +1528,7 @@ static uint64_t calc_domain_curr_mem_load(struct domain* curr)
     getdomaininfo(curr, &curr_info);
     
     // return curr->tot_pages * curr->handle->page_size
-    return curr_info.tot_pages * curr_info.handle.page_size;
+    return curr_info.tot_pages * curr_info.handle->page_size;
 }
 
 /*
@@ -1652,7 +1652,7 @@ static void schedule(void)
     /*** Update vcpu and mem load of current domain ***/
     domain_pct = calc_domain_vcpu_pct(domain, prev->domain, now, last_timestamp);
     domain_mem_load = calc_domain_curr_mem_load(domain);
-    update_domain_ressource_load(domain, domain_pct, domain_mem_load;
+    update_domain_ressource_load(domain, domain_pct, domain_mem_load);
     last_timestamp = now;
 
     /*** Update max_vcpus and mex_mem of each domain if necessary ***/
