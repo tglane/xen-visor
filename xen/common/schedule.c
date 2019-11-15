@@ -1491,7 +1491,8 @@ static void vcpu_periodic_timer_work(struct vcpu *v)
  */
 static s_time_t calc_domain_vcpu_pct(struct domain* curr, struct domain* last, s_time_t now, s_time_t old)
 {
-    struct xen_domctl_getdomaininfo curr_info;
+    /* Idea taken from tools/xenstat/xentop/xentop.c::get_cpu_pct(...) */
+    /*struct xen_domctl_getdomaininfo curr_info;
     struct xen_domctl_getdomaininfo last_info;
     s_time_t ns_elapsed;
 
@@ -1502,8 +1503,9 @@ static s_time_t calc_domain_vcpu_pct(struct domain* curr, struct domain* last, s
     getdomaininfo(last, &last_info);
 
     ns_elapsed = now - old;
-    /* Idea taken from tools/xenstat/xentop/xentop.c::get_cpu_pct(...) */
-    return ((curr_info.cpu_time - last_info.cpu_time) * 100) / ns_elapsed;
+    
+    return ((curr_info.cpu_time - last_info.cpu_time) * 100) / ns_elapsed;*/
+    return 1;
 }
 
 /**
@@ -1521,14 +1523,15 @@ static void update_domain_ressource_load(struct domain* curr, s_time_t pct, uint
  */
 static uint64_t calc_domain_curr_mem_load(struct domain* curr)
 {
-    struct xen_domctl_getdomaininfo curr_info;
+    /*struct xen_domctl_getdomaininfo curr_info;
 
     if(curr == NULL) return 0;
 
     getdomaininfo(curr, &curr_info);
     
     // return curr->tot_pages * curr->handle->page_size
-    return curr_info.tot_pages * PAGE_SIZE;
+    return curr_info.tot_pages * PAGE_SIZE;*/
+    return 1;
 }
 
 /*
