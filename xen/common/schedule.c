@@ -39,8 +39,10 @@
 #include <xen/err.h>
 
 #include <public/domctl.h> // include to calc domain load via getdomaininfo() (maybe not necessary)
+
 /* time stamp in ns from last domain schedule */
-s_time_t last_timestamp = 0;
+static unsigned long last_domain_cpu_time = 0;
+static s_time_t last_timestamp = 0;
 
 
 /* opt_sched: scheduler - default to configured value */
@@ -1489,23 +1491,37 @@ static void vcpu_periodic_timer_work(struct vcpu *v)
  * Calculate cpu load percentage of a domains vcpus
  * Author: timo.glane@gmail.com
  */
-static s_time_t calc_domain_vcpu_pct(struct domain* curr, struct domain* last, s_time_t now, s_time_t old)
+static s_time_t calc_domain_vcpu_pct(struct domain* curr, s_time_t now)
 {
     /* Idea taken from tools/xenstat/xentop/xentop.c::get_cpu_pct(...) */
-    /*struct xen_domctl_getdomaininfo curr_info;
-    struct xen_domctl_getdomaininfo last_info;
+    struct xen_domctl_getdomaininfo curr_info;
     s_time_t ns_elapsed;
+    s_time_t pct;
+	
+    if(curr == NULL) return 0;
+   
+    // Check if domain is idle domain
+    if(curr->domain_id != 32767)
+    {
+	getdomaininfo(curr, &curr_info);
 
-    if(curr == NULL) return 0.00;
-    if(last == NULL) return 0.00;
+	ns_elapsed = now - last_timestamp;
 
-    getdomaininfo(curr, &curr_info);
-    getdomaininfo(last, &last_info);
+	printk(" [DEBUG] 1 domain %d cpu_time: %ld\n", curr->domain_id, curr_info.cpu_time);
+	printk(" [DEBUG] 2 domain cpu_time: %ld\n", last_domain_cpu_time);
+	printk(" [DEBUG] Time elapsed: %ld\n", ns_elapsed);
 
-    ns_elapsed = now - old;
-    
-    return ((curr_info.cpu_time - last_info.cpu_time) * 100) / ns_elapsed;*/
-    return 1;
+	pct = ((curr_info.cpu_time - last_domain_cpu_time) * 100) / ns_elapsed;
+
+	last_domain_cpu_time = curr_info.cpu_time;
+
+	return pct;
+    }
+    else
+    {
+	return 0;
+    }
+
 }
 
 /**
@@ -1523,15 +1539,15 @@ static void update_domain_ressource_load(struct domain* curr, s_time_t pct, uint
  */
 static uint64_t calc_domain_curr_mem_load(struct domain* curr)
 {
-    /*struct xen_domctl_getdomaininfo curr_info;
+    struct xen_domctl_getdomaininfo curr_info;
 
     if(curr == NULL) return 0;
 
     getdomaininfo(curr, &curr_info);
     
     // return curr->tot_pages * curr->handle->page_size
-    return curr_info.tot_pages * PAGE_SIZE;*/
-    return 1;
+    return curr_info.tot_pages * PAGE_SIZE;
+
 }
 
 /*
@@ -1652,13 +1668,19 @@ static void schedule(void)
 
     domain = next->domain;
 
-    /*** Update vcpu and mem load of current domain ***/
-    domain_pct = calc_domain_vcpu_pct(domain, prev->domain, now, last_timestamp);
-    domain_mem_load = calc_domain_curr_mem_load(domain);
-    update_domain_ressource_load(domain, domain_pct, domain_mem_load);
-    last_timestamp = now;
+    /*** Update vcpu and mem load of current domain but check for idle domain first ***/
+    if(prev->domain->domain_id != 32767)
+    {
+	domain_pct = calc_domain_vcpu_pct(prev->domain, now);
+	printk(" [DEBUG] domain_pct: %ld\n", domain_pct);        
+    	
+	domain_mem_load = calc_domain_curr_mem_load(prev->domain);
+	printk(" [DEBUG] domain_mem_load: %ld\n", domain_mem_load);
+    
+    	update_domain_ressource_load(prev->domain, domain_pct, domain_mem_load);
+    	last_timestamp = now;
+    }
 
-    /*** Update max_vcpus and mex_mem of each domain if necessary ***/
 
     /*** XPV integration ***/
     if(domain->domain_id != 0 && !is_idle_domain(domain) && is_pv_domain(domain))
