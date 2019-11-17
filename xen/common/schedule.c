@@ -1501,7 +1501,7 @@ static s_time_t calc_domain_vcpu_pct(struct domain* curr, s_time_t now)
     if(curr == NULL) return 0;
    
     // Check if domain is idle domain
-    if(curr->domain_id != 32767)
+    if(!is_idle_domain(curr) && is_pv_domain(curr))
     {
 	getdomaininfo(curr, &curr_info);
 
@@ -1669,7 +1669,7 @@ static void schedule(void)
     domain = next->domain;
 
     /*** Update vcpu and mem load of current domain but check for idle domain first ***/
-    if(prev->domain->domain_id != 32767)
+    if(!is_idle_domain(prev->domain) && is_pv_domain(prev->domain))
     {
 	domain_pct = calc_domain_vcpu_pct(prev->domain, now);
 	printk(" [DEBUG] domain_pct: %ld\n", domain_pct);        
