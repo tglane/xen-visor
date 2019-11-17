@@ -1493,7 +1493,7 @@ static void vcpu_periodic_timer_work(struct vcpu *v)
  */
 static s_time_t calc_domain_vcpu_pct(struct domain* curr, s_time_t now)
 {
-    /* Idea taken from tools/xenstat/xentop/xentop.c::get_cpu_pct(...) */
+    /* tools/xenstat/xentop/xentop.c::get_cpu_pct(...) */
     struct xen_domctl_getdomaininfo curr_info;
     s_time_t ns_elapsed;
     s_time_t pct;
@@ -1503,23 +1503,23 @@ static s_time_t calc_domain_vcpu_pct(struct domain* curr, s_time_t now)
     // Check if domain is idle domain
     if(!is_idle_domain(curr) && is_pv_domain(curr))
     {
-	getdomaininfo(curr, &curr_info);
+        getdomaininfo(curr, &curr_info);
 
-	ns_elapsed = now - last_timestamp;
+        ns_elapsed = now - last_timestamp;
 
-	printk(" [DEBUG] 1 domain %d cpu_time: %ld\n", curr->domain_id, curr_info.cpu_time);
-	printk(" [DEBUG] 2 domain cpu_time: %ld\n", last_domain_cpu_time);
-	printk(" [DEBUG] Time elapsed: %ld\n", ns_elapsed);
+        printk(" [DEBUG] 1 domain %d cpu_time: %ld\n", curr->domain_id, curr_info.cpu_time);
+        printk(" [DEBUG] 2 domain cpu_time: %ld\n", last_domain_cpu_time);
+        printk(" [DEBUG] Time elapsed: %ld\n", ns_elapsed);
 
-	pct = ((curr_info.cpu_time - last_domain_cpu_time) * 100) / ns_elapsed;
+        pct = ((curr_info.cpu_time - last_domain_cpu_time) * 100) / ns_elapsed;
 
-	last_domain_cpu_time = curr_info.cpu_time;
+        last_domain_cpu_time = curr_info.cpu_time;
 
-	return pct;
+        return pct;
     }
     else
     {
-	return 0;
+	    return 0;
     }
 
 }
@@ -1671,11 +1671,11 @@ static void schedule(void)
     /*** Update vcpu and mem load of current domain but check for idle domain first ***/
     if(!is_idle_domain(prev->domain) && is_pv_domain(prev->domain))
     {
-	domain_pct = calc_domain_vcpu_pct(prev->domain, now);
-	printk(" [DEBUG] domain_pct: %ld\n", domain_pct);        
-    	
-	domain_mem_load = calc_domain_curr_mem_load(prev->domain);
-	printk(" [DEBUG] domain_mem_load: %ld\n", domain_mem_load);
+        domain_pct = calc_domain_vcpu_pct(prev->domain, now);
+        printk(" [DEBUG] domain_pct: %ld\n", domain_pct);        
+            
+        domain_mem_load = calc_domain_curr_mem_load(prev->domain);
+        printk(" [DEBUG] domain_mem_load: %ld\n", domain_mem_load);
     
     	update_domain_ressource_load(prev->domain, domain_pct, domain_mem_load);
     	last_timestamp = now;
