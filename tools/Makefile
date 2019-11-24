@@ -40,6 +40,8 @@ SUBDIRS-$(CONFIG_X86) += debugger/gdbsx
 SUBDIRS-$(CONFIG_X86) += debugger/kdd
 SUBDIRS-$(CONFIG_TESTS) += tests
 
+SUBDIRS-y += xen_ressource_manager
+
 # These don't cross-compile
 ifeq ($(XEN_COMPILE_ARCH),$(XEN_TARGET_ARCH))
 SUBDIRS-y += python
