@@ -10,6 +10,11 @@ int main(void)
     char* mem_load;
     unsigned int read_length;
     xsh = (struct xs_handle*) xs_open(0);
+    if(xsh == NULL)
+    {
+        printf("Could not open xs_handle\n");
+        return -1;
+    }
 
     mem_load = (char*) xs_read(xsh, XBT_NULL, "/local/domain/0/data/memload", &read_length);
 
