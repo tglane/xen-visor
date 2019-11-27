@@ -44,7 +44,7 @@ double RM_XENSTORE_ACCESS_read_domain_cpuload(int domid)
     char path[31];
     char* read_val;
     unsigned int read_length;
-    int cpuload;
+    double cpuload;
 
     if(xsh == NULL)
         return -1;

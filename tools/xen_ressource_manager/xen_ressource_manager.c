@@ -45,7 +45,8 @@ int main(void)
     free(read_val);
     xs_close(xsh);*/
 
-    int memload, cpuload;
+    int memload;
+    double cpuload;
 
     if(RM_XENSTORE_ACCESS_init() < 0)
         return -1;
@@ -53,7 +54,7 @@ int main(void)
     memload = RM_XENSTORE_ACCESS_read_domain_memload(0);
     cpuload = RM_XENSTORE_ACCESS_read_domain_cpuload(0);
 
-    printf("Mem: %d, CPU: %d\n", memload, cpuload);
+    printf("Mem: %d, CPU: %f\n", memload, cpuload);
     
     RM_XENSTORE_ACCESS_close();
 }
