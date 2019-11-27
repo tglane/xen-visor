@@ -9,7 +9,7 @@
 #include <xentoollog.h>
 
 static libxl_ctx* ctx;
-xentoollog_logger_stdiostream* logger;
+static xentoollog_logger_stdiostream* logger;
 
 int RM_XL_ACCESS_init(void)
 {
@@ -38,26 +38,31 @@ void RM_XL_ACCESS_close(void)
     }
 }
 
-int RM_XL_ACCESS_test(void)
+int* RM_XL_ACCESS_get_domain_list(int* num_dom_out)
 {
     struct libxl_dominfo* info;
-    int info_length, i;
+    int i;
+    int* domid_list;
 
     //libxl_dominfo_init(info);
-    info = libxl_list_domain(ctx, &info_length);
+    info = libxl_list_domain(ctx, num_dom_out);
     if(info == NULL)
-        return -1;
+        exit(-1);
+    
+    domid_list = malloc(*num_dom_out * sizeof(int));
 
-    for(i = 0; i < info_length; i++)
+    for(i = 0; i < *num_dom_out; i++)
     {
-        char* domname;
-        domname = libxl_domid_to_name(ctx, info[i].domid);
-        printf("id: %5d, name: %-40s", info[i].domid, domname);
-        free(domname);
+        //char* domname;
+        domid_list[i] = info[i].domid;
+
+        //domname = libxl_domid_to_name(ctx, info[i].domid);
+        //printf("id: %5d, name: %-40s\n", info[i].domid, domname);
+        //free(domname);
     }
     
-    libxl_dominfo_list_free(info, info_length);
+    libxl_dominfo_list_free(info, *num_dom_out);
     
-    return 0;
+    return domid_list;
 }
 
