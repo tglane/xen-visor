@@ -1,12 +1,14 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include <rm_xenstore_access.h>
+
 //#include <_paths.h>
-#include <xenstore.h>
+//#include <xenstore.h>
 
 int main(void)
 {
-    struct xs_handle* xsh;
+    /*struct xs_handle* xsh;
     //struct expanding_buffer ebuf;
     char* read_val;
     unsigned int read_length;
@@ -38,8 +40,20 @@ int main(void)
     }
     cpu_load = atof(read_val);
 
-    printf("Memload: %d, CPU load: %f\n", mem_load, cpu_load);
+    printf("Memload: %d, CPU load: %d\n", mem_load, cpu_load);
 
     free(read_val);
-    xs_close(xsh);
+    xs_close(xsh);*/
+
+    int memload, cpuload;
+
+    if(RM_XENSTORE_ACCESS_init() < 0)
+        return -1;
+
+    memload = RM_XENSTORE_ACCESS_read_domain_memload(0);
+    cpuload = RM_XENSTORE_ACCESS_read_domain_cpuload(0);
+
+    printf("Mem: %d, CPU: %d\n", memload, cpuload);
+    
+    RM_XENSTORE_ACCESS_close();
 }

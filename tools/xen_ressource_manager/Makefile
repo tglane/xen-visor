@@ -6,11 +6,13 @@ XEN_ROOT = $(CURDIR)/../..
 include $(XEN_ROOT)/tools/Rules.mk
 
 CFLAGS += -Werror
+CFLAGS += -I.
 CFLAGS += $(CFLAGS_libxenstore)
 
 LDLIBS += $(LDLIBS_libxenstore)
 
 RM_OBJS = xen_ressource_manager.o
+RM_OBJS += rm_xenstore_access.o
 
 #genpath-target = $(call buildmakevars2header,_paths.h)
 #$(eval $(genpath-target))
