@@ -19,8 +19,10 @@ int RM_XL_init(void)
 
     libxl_ctx_alloc(&ctx, LIBXL_VERSION, 0, (xentoollog_logger*) logger);
     if(ctx == NULL)
+    {
+        RM_XL_close();
         return -1;
-    
+    }
     return 0;
 }
 
@@ -44,10 +46,13 @@ int* RM_XL_get_domain_list(int* num_dom_out)
     int i;
     int* domid_list;
 
+    if(ctx == NULL)
+        return NULL;
+
     //libxl_dominfo_init(info);
     info = libxl_list_domain(ctx, num_dom_out);
     if(info == NULL)
-        exit(-1);
+        return NULL;
     
     domid_list = malloc(*num_dom_out * sizeof(int));
 
@@ -68,6 +73,32 @@ int* RM_XL_get_domain_list(int* num_dom_out)
 
 int RM_XL_add_vcpu(int domid)
 {
-    return 1;
+    libxl_dominfo domain_info;
+    libxl_bitmap cpu_map;
+    unsigned int i, online_vcpus, host_cpus;
+
+    if(ctx == NULL)
+        return -1;
+
+    host_cpus = libxl_get_max_cpus(ctx);
+    libxl_domain_info(ctx, &domain_info, domid);
+    online_vcpus = domain_info.vcpu_online;
+
+    if(online_vcpus + 1 > host_cpus)
+    {
+        libxl_dominfo_dispose(&domain_info);
+        return -1;
+    }
+
+    libxl_cpu_bitmap_alloc(ctx, &cpu_map, online_vcpus + 1);
+    for(i = 0; i < online_vcpus + 1; i++)
+    {
+        libxl_bitmap_set(&cpu_map, i);
+    }
+    libxl_set_vcpuonline(ctx, domid, &cpu_map, NULL);
+
+    libxl_bitmap_dispose(&cpu_map);
+    libxl_dominfo_dispose(&domain_info);
+    return 0;
 }
 
