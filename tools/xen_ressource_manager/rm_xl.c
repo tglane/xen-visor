@@ -1,4 +1,4 @@
-#include <rm_xl_access.h>
+#include <rm_xl.h>
 
 #include <stdio.h>
 
@@ -11,7 +11,7 @@
 static libxl_ctx* ctx;
 static xentoollog_logger_stdiostream* logger;
 
-int RM_XL_ACCESS_init(void)
+int RM_XL_init(void)
 {
     logger = xtl_createlogger_stdiostream(stderr, XTL_PROGRESS, 0);
     if(logger == NULL)
@@ -24,7 +24,7 @@ int RM_XL_ACCESS_init(void)
     return 0;
 }
 
-void RM_XL_ACCESS_close(void)
+void RM_XL_close(void)
 {
     if(ctx)
     {
@@ -38,7 +38,7 @@ void RM_XL_ACCESS_close(void)
     }
 }
 
-int* RM_XL_ACCESS_get_domain_list(int* num_dom_out)
+int* RM_XL_get_domain_list(int* num_dom_out)
 {
     struct libxl_dominfo* info;
     int i;
@@ -64,5 +64,10 @@ int* RM_XL_ACCESS_get_domain_list(int* num_dom_out)
     libxl_dominfo_list_free(info, *num_dom_out);
     
     return domid_list;
+}
+
+int RM_XL_add_vcpu(int domid)
+{
+    return 1;
 }
 

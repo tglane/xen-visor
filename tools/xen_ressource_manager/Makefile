@@ -17,8 +17,8 @@ LDLIBS += $(LDLIBS_libxenlight)
 LDLIBS += $(LDLIBS_libxentoollog)
 
 RM_OBJS = xen_ressource_manager.o
-RM_OBJS += rm_xenstore_access.o
-RM_OBJS += rm_xl_access.o
+RM_OBJS += rm_xenstore.o
+RM_OBJS += rm_xl.o
 
 #genpath-target = $(call buildmakevars2header,_paths.h)
 #$(eval $(genpath-target))

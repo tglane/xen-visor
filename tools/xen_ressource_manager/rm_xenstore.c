@@ -1,4 +1,4 @@
-#include <rm_xenstore_access.h>
+#include <rm_xenstore.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -6,7 +6,7 @@
 
 static struct xs_handle* xsh;
 
-int RM_XENSTORE_ACCESS_init(void)
+int RM_XENSTORE_init(void)
 {
     xsh = (struct xs_handle*) xs_open(0);
     if(xsh == NULL)
@@ -15,13 +15,13 @@ int RM_XENSTORE_ACCESS_init(void)
     return 0;
 }
 
-void RM_XENSTORE_ACCESS_close(void)
+void RM_XENSTORE_close(void)
 {
     if(xsh != NULL)
         xs_close(xsh);
 }
 
-int RM_XENSTORE_ACCESS_read_domain_memload(int domid)
+int RM_XENSTORE_read_domain_memload(int domid)
 {
     char path[31];
     char* read_val;
@@ -40,7 +40,7 @@ int RM_XENSTORE_ACCESS_read_domain_memload(int domid)
     return memload;
 }
 
-double RM_XENSTORE_ACCESS_read_domain_cpuload(int domid)
+double RM_XENSTORE_read_domain_cpuload(int domid)
 {
     char path[31];
     char* read_val;
