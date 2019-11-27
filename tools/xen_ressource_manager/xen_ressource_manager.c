@@ -28,7 +28,9 @@ int main(void)
     if(RM_XL_add_vcpu(1) == 0)
         printf("added vcpu to domain 1");
 
+    if(RM_XL_add_memory(1, 500) == 0)
+        printf("added memory to domain 1");
+
     RM_XL_close();
     free(domid_list);
-
 }

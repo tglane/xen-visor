@@ -1,8 +1,5 @@
 #include <rm_xl.h>
 
-#include <stdio.h>
-
-#include <stdlib.h>
 #include <libxl.h>
 #include <libxl_utils.h>
 #include <libxlutil.h>
@@ -99,6 +96,23 @@ int RM_XL_add_vcpu(int domid)
 
     libxl_bitmap_dispose(&cpu_map);
     libxl_dominfo_dispose(&domain_info);
+    return 0;
+}
+
+int RM_XL_add_memory(int domid, uint64_t add)
+{
+    uint64_t memory_online;
+
+    if(ctx == NULL)
+        return -1;
+
+    if(libxl_get_memory_target(ctx, domid, &memory_online))
+        return -1;
+
+    memory_online += add;
+    if(libxl_set_memory_target(ctx, domid, memory_online, 0, 1))
+        return -1;
+
     return 0;
 }
 
