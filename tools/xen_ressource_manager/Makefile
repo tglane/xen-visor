@@ -8,16 +8,22 @@ include $(XEN_ROOT)/tools/Rules.mk
 CFLAGS += -Werror
 CFLAGS += -I.
 CFLAGS += $(CFLAGS_libxenstore)
+CFLAGS += $(CFLAGS_libxenlight)
+CFLAGS += $(CFLAGS_libxentoollog)
 
 LDLIBS += $(LDLIBS_libxenstore)
+LDLIBS += $(LDLIBS_libxltutil)
+LDLIBS += $(LDLIBS_libxenlight)
+LDLIBS += $(LDLIBS_libxentoollog)
 
 RM_OBJS = xen_ressource_manager.o
 RM_OBJS += rm_xenstore_access.o
+RM_OBJS += rm_xl_access.o
 
-#genpath-target = $(call buildmakevars2header,_paths.h)
-#$(eval $(genpath-target))
+genpath-target = $(call buildmakevars2header,_paths.h)
+$(eval $(genpath-target))
 
-#$(RM_OBJS): _paths.h
+$(RM_OBJS): _paths.h
 
 .PHONY: all
 all: xen_ressource_manager
@@ -40,7 +46,7 @@ uninstall:
 .PHONY: clean
 clean:
 	$(RM) -f *.o xen_ressource_manager $(DEPS_RM)
-	#$(RM) -f *.o xen_ressource_manager _paths.h $(DEPS_RM)
+	$(RM) -f *.o xen_ressource_manager _paths.h $(DEPS_RM)
 
 .PHONY: distclean
 distclean: clean

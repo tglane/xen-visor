@@ -2,6 +2,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <xenstore.h>
 
 static struct xs_handle* xsh;
 
