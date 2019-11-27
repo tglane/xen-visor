@@ -22,6 +22,7 @@ int main(void)
     RM_XENSTORE_ACCESS_close();
 
     RM_XL_ACCESS_init();
+    RM_XL_ACCESS_test();
     RM_XL_ACCESS_close();
 
 }

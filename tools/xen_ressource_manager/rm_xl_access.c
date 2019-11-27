@@ -1,5 +1,7 @@
 #include <rm_xl_access.h>
 
+#include <stdio.h>
+
 #include <stdlib.h>
 #include <libxl.h>
 #include <libxl_utils.h>
@@ -34,5 +36,28 @@ void RM_XL_ACCESS_close(void)
         xtl_logger_destroy((xentoollog_logger*) logger);
         logger = NULL;
     }
+}
+
+int RM_XL_ACCESS_test(void)
+{
+    struct libxl_dominfo* info;
+    int info_length, i;
+
+    //libxl_dominfo_init(info);
+    info = libxl_list_domain(ctx, &info_length);
+    if(info == NULL)
+        return -1;
+
+    for(i = 0; i < info_length; i++)
+    {
+        char* domname;
+        domname = libxl_domid_to_name(ctx, info[i].domid);
+        printf("id: %5d, name: %-40s", info[i].domid, domname);
+        free(domname);
+    }
+    
+    libxl_dominfo_list_free(info, info_length);
+    
+    return 0;
 }
 
