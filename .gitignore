@@ -255,6 +255,7 @@ tools/xenmon/xentrace_setmask
 tools/xenmon/xenbaked
 tools/xenpaging/xenpaging
 tools/xenpmd/xenpmd
+tools/xen_ressource_manager/xen_ressource_manager
 tools/xenstat/libxenstat/src/_paths.h
 tools/xenstat/libxenstat/xenstat.pc
 tools/xenstat/xentop/xentop
