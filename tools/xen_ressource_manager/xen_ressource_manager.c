@@ -26,10 +26,10 @@ int main(void)
     RM_XENSTORE_close();
 
     if(RM_XL_add_vcpu(1) == 0)
-        printf("added vcpu to domain 1");
+        printf("added vcpu to domain 1\n");
 
     if(RM_XL_add_memory(1, 500) == 0)
-        printf("added memory to domain 1");
+        printf("added memory to domain 1\n");
 
     RM_XL_close();
     free(domid_list);
