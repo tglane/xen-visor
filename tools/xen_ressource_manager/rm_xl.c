@@ -1,5 +1,5 @@
 #include <rm_xl.h>
-
+#include <stdio.h>
 #include <libxl.h>
 #include <libxl_utils.h>
 #include <libxlutil.h>
@@ -99,7 +99,7 @@ int RM_XL_add_vcpu(int domid)
     return 0;
 }
 
-int RM_XL_add_memory(int domid, uint64_t add)
+int RM_XL_add_memory(int domid, uint64_t add_kb)
 {
     uint64_t memory_online;
 
@@ -108,8 +108,9 @@ int RM_XL_add_memory(int domid, uint64_t add)
 
     if(libxl_get_memory_target(ctx, domid, &memory_online))
         return -1;
-
-    memory_online += add;
+    printf("old memory online: %ld\n", memory_online);
+    memory_online += add_kb;
+    printf("new Memory online: %ld\n", memory_online);
     if(libxl_set_memory_target(ctx, domid, memory_online, 0, 1))
         return -1;
 

@@ -15,7 +15,7 @@ int* RM_XL_get_domain_list(int* num_dom_out);
 
 int RM_XL_add_vcpu(int domid);
 
-int RM_XL_add_memory(int domid, uint64_t add);
+int RM_XL_add_memory(int domid, uint64_t add_kb);
 
 #endif
 
