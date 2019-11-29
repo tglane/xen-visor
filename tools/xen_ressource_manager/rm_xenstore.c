@@ -52,7 +52,7 @@ double RM_XENSTORE_read_domain_memload(int domid)
         return -1;
     mem_total = atoi(read_val);
     
-    mem_load = (double) mem_usage / (double) mem_total;
+    mem_load = ((double) mem_usage / (double) mem_total) * 100;
 
     return mem_load;
 }
