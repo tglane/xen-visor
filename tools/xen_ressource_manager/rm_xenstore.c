@@ -21,23 +21,32 @@ void RM_XENSTORE_close(void)
         xs_close(xsh);
 }
 
-int RM_XENSTORE_read_domain_memload(int domid)
+double RM_XENSTORE_read_domain_memload(int domid)
 {
-    char path[31];
+    char path[32];
     char* read_val;
     unsigned int read_length;
-    int memload;
+    int mem_total, mem_usage;
+    double mem_load;
 
     if(xsh == NULL)
         return -1;
     
-    snprintf(path, 31, "/local/domain/%d/data/memload", domid);
+    snprintf(path, 32, "/local/domain/%d/data/memload", domid);
     read_val = xs_read(xsh, XBT_NULL, path, &read_length);
     if(read_val == NULL)
         return -1;
+    mem_usage = atoi(read_val);
+    
+    snprintf(path, 32, "/local/domain/%d/data/memtotal", domid);
+    read_val = xs_read(xsh, XBT_NULL, path, &read_length);
+    if(read_val == NULL)
+        return -1;
+    mem_total = atoi(read_val);
+    
+    mem_load = (double) mem_usage / (double) mem_total;
 
-    memload = atoi(read_val);
-    return memload;
+    return mem_load;
 }
 
 double RM_XENSTORE_read_domain_cpuload(int domid)

@@ -6,8 +6,8 @@
 
 int main(void)
 {
-    int memload, num_domains, i;
-    double cpuload;
+    int num_domains, i;
+    double memload, cpuload;
     int* domid_list;
 
     RM_XL_init();
@@ -21,7 +21,7 @@ int main(void)
         memload = RM_XENSTORE_read_domain_memload(domid_list[i]);
         cpuload = RM_XENSTORE_read_domain_cpuload(domid_list[i]);
 
-        printf("domain_id: %d, memload: %d, cpuload: %f\n", domid_list[i], memload, cpuload);
+        printf("domain_id: %d, memload: %f, cpuload: %f\n", domid_list[i], memload, cpuload);
     }
     RM_XENSTORE_close();
 
