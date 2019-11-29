@@ -68,7 +68,7 @@ int* RM_XL_get_domain_list(int* num_dom_out)
     return domid_list;
 }
 
-int RM_XL_add_vcpu(int domid)
+int RM_XL_change_vcpu(int domid, int change_vcpus)
 {
     libxl_dominfo domain_info;
     libxl_bitmap cpu_map;
@@ -81,14 +81,14 @@ int RM_XL_add_vcpu(int domid)
     libxl_domain_info(ctx, &domain_info, domid);
     online_vcpus = domain_info.vcpu_online;
 
-    if(online_vcpus + 1 > host_cpus)
+    if(online_vcpus + change_vcpus > host_cpus && online_vcpus + change_vcpus <= 0)
     {
         libxl_dominfo_dispose(&domain_info);
         return -1;
     }
 
     libxl_cpu_bitmap_alloc(ctx, &cpu_map, online_vcpus + 1);
-    for(i = 0; i < online_vcpus + 1; i++)
+    for(i = 0; i < online_vcpus + change_vcpus; i++)
     {
         libxl_bitmap_set(&cpu_map, i);
     }
@@ -99,7 +99,8 @@ int RM_XL_add_vcpu(int domid)
     return 0;
 }
 
-int RM_XL_add_memory(int domid, uint64_t add_kb)
+// TODO check if new memory amount is lower than static_mem_max
+int RM_XL_change_memory(int domid, int64_t change_kb)
 {
     uint64_t memory_online;
 
@@ -108,8 +109,8 @@ int RM_XL_add_memory(int domid, uint64_t add_kb)
 
     if(libxl_get_memory_target(ctx, domid, &memory_online))
         return -1;
-    
-    memory_online += add_kb;
+     
+    memory_online += change_kb;
     if(libxl_set_memory_target(ctx, domid, memory_online, 0, 1))
         return -1;
 
