@@ -21,6 +21,14 @@ void RM_XENSTORE_close(void)
         xs_close(xsh);
 }
 
+int RM_XENSTORE_initialized(void)
+{
+    if(xsh == NULL)
+        return 0;
+    else
+        return 1;
+}
+
 double RM_XENSTORE_read_domain_memload(int domid)
 {
     char path[32];
