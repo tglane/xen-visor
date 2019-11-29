@@ -36,7 +36,7 @@ int initHandle(void)
     if(RM_XL_init() < 0)
         return -1;
 
-    if(RM_XENSTORE_init < 0)
+    if(RM_XENSTORE_init() < 0)
         return -1;
 
     return 0;
