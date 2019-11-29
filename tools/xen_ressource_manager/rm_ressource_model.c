@@ -9,7 +9,10 @@ int RM_RESSOURCE_MODEL_update(int* domid_list, int num_domains)
     double memload, cpuload;
 
     if(!RM_XENSTORE_initialized())
+    {
+        printf("xenstore not initialized\n");
         return -1;
+    }
 
     for(i = 0; i < num_domains; i++)
     {

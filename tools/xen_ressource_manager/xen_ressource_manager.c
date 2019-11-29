@@ -16,11 +16,15 @@ int main_ressource_checker(void)
 
     RM_RESSOURCE_MODEL_update(domid_list, num_domains);
 
-    if(RM_XL_change_vcpu(2, -2) == 0)
-        printf("added vcpu to domain 1\n");
+    // test cpu and ram change
+    if(num_domains > 1)
+    {
+        if(RM_XL_change_vcpu(domid_list[1], 1) == 0)
+            printf("added vcpu to domain 1\n");
 
-    if(RM_XL_change_memory(2, -200000) == 0)
-        printf("added memory to domain 1\n");
+        if(RM_XL_change_memory(domid_list[1], 100000) == 0)
+            printf("added memory to domain 1\n");
+    }
 
     free(domid_list);
 
