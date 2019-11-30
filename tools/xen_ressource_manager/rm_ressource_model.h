@@ -14,7 +14,7 @@ void RM_RESSOURCE_MODEL_free(void);
 
 int RM_RESSOURCE_MODEL_update(int* domid_list, int num_domains);
 
-domain_load_t* RM_RESSOURCE_MODEL_get_adaption_domains(int* num_entries);
+domain_load_t* RM_RESSOURCE_MODEL_get_ressource_data(int* num_entries);
 
 #endif
 

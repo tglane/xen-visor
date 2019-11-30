@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h> // just for sleep()
 
 #include <rm_xenstore.h>
 #include <rm_xl.h>
@@ -17,7 +18,7 @@ int main_ressource_checker(void)
 
     RM_RESSOURCE_MODEL_update(domid_list, num_domains);
 
-    domain_load = RM_RESSOURCE_MODEL_get_adaption_domains(&num_entries);
+    domain_load = RM_RESSOURCE_MODEL_get_ressource_data(&num_entries);
     for(i = 0; i < num_entries; i++)
     {
         printf("ID: %d; MEM: %f; CPU: %f\n", domain_load[i].dom_id, domain_load[i].mem_load, domain_load[i].cpu_load);
@@ -53,11 +54,16 @@ int initHandle(void)
 
 int main(void)
 {
+    int i; 
+
     if(initHandle() < 0)
         exit(0);
 
-    main_ressource_checker();
-
+    for(i = 0; i < 2; i++)
+    {
+        main_ressource_checker();
+        sleep(2);
+    }
     RM_RESSOURCE_MODEL_free();
     RM_XENSTORE_close();
     RM_XL_close();
