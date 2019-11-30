@@ -59,11 +59,12 @@ int main(void)
     if(initHandle() < 0)
         exit(0);
 
-    for(i = 0; i < 2; i++)
+    for(i = 0; i < 10; i++)
     {
         main_ressource_checker();
-        sleep(2);
+        sleep(1);
     }
+
     RM_RESSOURCE_MODEL_free();
     RM_XENSTORE_close();
     RM_XL_close();

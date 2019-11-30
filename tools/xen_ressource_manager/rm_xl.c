@@ -5,6 +5,8 @@
 #include <libxlutil.h>
 #include <xentoollog.h>
 
+#include <stdio.h>
+
 static libxl_ctx* ctx;
 static xentoollog_logger_stdiostream* logger;
 
@@ -55,16 +57,11 @@ int* RM_XL_get_domain_list(int* num_dom_out)
 
     for(i = 0; i < *num_dom_out; i++)
     {
-        //char* domname;
         domid_list[i] = info[i].domid;
-
-        //domname = libxl_domid_to_name(ctx, info[i].domid);
-        //printf("id: %5d, name: %-40s\n", info[i].domid, domname);
-        //free(domname);
     }
-    
-    libxl_dominfo_list_free(info, *num_dom_out);
-    
+
+    libxl_dominfo_list_free(info, *num_dom_out); 
+
     return domid_list;
 }
 

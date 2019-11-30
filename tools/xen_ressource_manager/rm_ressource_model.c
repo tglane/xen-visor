@@ -38,7 +38,8 @@ int RM_RESSOURCE_MODEL_update(int* domid_list, int num_domains)
         // Realloc memory for ressource_data if max_domain_id is lower than current id
         if(domid_list[i] > max_domain_id)
         {
-            ressource_data = realloc(ressource_data, domid_list[i]);
+            printf("realloc .. id: %d\n", domid_list[i]);
+            ressource_data = realloc(ressource_data, (domid_list[i] + 1) * sizeof(domain_load_t));
             if(ressource_data == NULL)
                 return -1;
             max_domain_id = domid_list[i];
