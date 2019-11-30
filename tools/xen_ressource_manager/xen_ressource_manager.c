@@ -46,6 +46,8 @@ int initHandle(void)
     if(RM_XENSTORE_init() < 0)
         return -1;
 
+    RM_RESSOURCE_MODEL_init();
+
     return 0;
 }
 
@@ -56,6 +58,7 @@ int main(void)
 
     main_ressource_checker();
 
+    RM_RESSOURCE_MODEL_free();
     RM_XENSTORE_close();
     RM_XL_close();
 }
