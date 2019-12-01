@@ -11,18 +11,24 @@ int main_ressource_checker(void)
     int num_domains, num_entries, i;
     int* domid_list;
     domain_load_t* domain_load;
-
+    
     domid_list = RM_XL_get_domain_list(&num_domains);
     if(domid_list == NULL)
         return -1;
-
+    
     RM_RESSOURCE_MODEL_update(domid_list, num_domains);
-
     domain_load = RM_RESSOURCE_MODEL_get_ressource_data(&num_entries);
-    for(i = 0; i < num_entries; i++)
+   
+    if(num_domains <= num_entries)
     {
-        printf("ID: %d; MEM: %f; CPU: %f; Iterations: %ld\n", domain_load[i].dom_id, domain_load[i].mem_load, 
-                domain_load[i].cpu_load, domain_load[i].iterations);
+        // Get the load data from all exciting domains
+        for(i = 0; i < num_domains; i++)
+        {
+            printf("ID: %d; MEM: %f; CPU: %f; Iterations: %ld\n", domain_load[domid_list[i]].dom_id, 
+                    domain_load[domid_list[i]].mem_load,
+                    domain_load[domid_list[i]].cpu_load, 
+                    domain_load[domid_list[i]].iterations);
+        }
     }
 
     // test cpu and ram change

@@ -43,7 +43,7 @@ int RM_RESSOURCE_MODEL_update(int* domid_list, int num_domains)
             if(ressource_data == NULL)
                 return -1;
 
-            for(j = max_domain_id; j < domid_list[i]; j++)
+            for(j = max_domain_id + 1; j < domid_list[i]; j++)
             {
                 ressource_data[j] = (domain_load_t) {0, 0.0, 0.0, 0};
             }
@@ -52,10 +52,10 @@ int RM_RESSOURCE_MODEL_update(int* domid_list, int num_domains)
         }
 
         // save current domain load
-        ressource_data[i].iterations++;
-        ressource_data[i].dom_id = domid_list[i];
-        ressource_data[i].cpu_load = cpuload;
-        ressource_data[i].mem_load = memload;
+        ressource_data[domid_list[i]].iterations++;
+        ressource_data[domid_list[i]].dom_id = domid_list[i];
+        ressource_data[domid_list[i]].cpu_load = cpuload;
+        ressource_data[domid_list[i]].mem_load = memload;
     }
 
     return 0;
@@ -67,7 +67,7 @@ domain_load_t* RM_RESSOURCE_MODEL_get_ressource_data(int* num_entries)
     // TODO split to memory and cpu?
     domain_load_t* ret;
     ret = ressource_data;
-    *num_entries = max_domain_id;
+    *num_entries = max_domain_id + 1;
     return ret;
     
 }
