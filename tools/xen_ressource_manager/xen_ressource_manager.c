@@ -18,7 +18,8 @@ int main_ressource_checker(void)
     
     RM_RESSOURCE_MODEL_update(domid_list, num_domains);
     domain_load = RM_RESSOURCE_MODEL_get_ressource_data(&num_entries);
-   
+  
+    printf("num_domains: %d; num_entries: %d\n", num_domains, num_entries); 
     if(num_domains <= num_entries)
     {
         // Get the load data from all exciting domains

@@ -33,9 +33,6 @@ int RM_RESSOURCE_MODEL_update(int* domid_list, int num_domains)
         memload = RM_XENSTORE_read_domain_memload(domid_list[i]);
         cpuload = RM_XENSTORE_read_domain_cpuload(domid_list[i]);
 
-        if(memload < 0 || cpuload < 0)
-            continue;
-
         // Realloc memory for ressource_data if max_domain_id is lower than current id
         if(domid_list[i] > max_domain_id)
         {
@@ -51,11 +48,22 @@ int RM_RESSOURCE_MODEL_update(int* domid_list, int num_domains)
             max_domain_id = domid_list[i];
         }
 
-        // save current domain load
-        ressource_data[domid_list[i]].iterations++;
-        ressource_data[domid_list[i]].dom_id = domid_list[i];
-        ressource_data[domid_list[i]].cpu_load = cpuload;
-        ressource_data[domid_list[i]].mem_load = memload;
+       
+        // Save current domain load
+        // TODO calculate average load
+        if(memload < 0 || cpuload < 0)
+        {
+            ressource_data[domid_list[i]].dom_id = domid_list[i];
+            ressource_data[domid_list[i]].cpu_load = 0;
+            ressource_data[domid_list[i]].mem_load = 0;
+        }
+        else
+        {
+            ressource_data[domid_list[i]].iterations++;
+            ressource_data[domid_list[i]].dom_id = domid_list[i];
+            ressource_data[domid_list[i]].cpu_load = cpuload;
+            ressource_data[domid_list[i]].mem_load = memload;
+        }
     }
 
     return 0;
