@@ -63,12 +63,8 @@ int RM_RESSOURCE_MODEL_update(int* domid_list, int num_domains)
 
 domain_load_t* RM_RESSOURCE_MODEL_get_ressource_data(int* num_entries)
 {
-    // TODO get all domains which need hardware adaption
-    // TODO split to memory and cpu?
-    domain_load_t* ret;
-    ret = ressource_data;
     *num_entries = max_domain_id + 1;
-    return ret;
+    return ressource_data;
     
 }
 
