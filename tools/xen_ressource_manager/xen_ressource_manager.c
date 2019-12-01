@@ -21,7 +21,8 @@ int main_ressource_checker(void)
     domain_load = RM_RESSOURCE_MODEL_get_ressource_data(&num_entries);
     for(i = 0; i < num_entries; i++)
     {
-        printf("ID: %d; MEM: %f; CPU: %f\n", domain_load[i].dom_id, domain_load[i].mem_load, domain_load[i].cpu_load);
+        printf("ID: %d; MEM: %f; CPU: %f; Iterations: %ld\n", domain_load[i].dom_id, domain_load[i].mem_load, 
+                domain_load[i].cpu_load, domain_load[i].iterations);
     }
 
     // test cpu and ram change

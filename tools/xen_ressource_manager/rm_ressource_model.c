@@ -5,11 +5,12 @@
 #include <rm_xenstore.h>
 
 static domain_load_t* ressource_data;
-int max_domain_id = 0;
+static int max_domain_id = 0;
 
 void RM_RESSOURCE_MODEL_init(void)
 {
     ressource_data = malloc(sizeof(domain_load_t));
+    ressource_data[0] = (domain_load_t) {0, 0.0, 0.0, 0};
 }
 
 void RM_RESSOURCE_MODEL_free(void)
@@ -19,7 +20,7 @@ void RM_RESSOURCE_MODEL_free(void)
 
 int RM_RESSOURCE_MODEL_update(int* domid_list, int num_domains)
 {
-    int i;
+    int i, j;
     double memload, cpuload;
 
     if(!RM_XENSTORE_initialized())
@@ -41,10 +42,17 @@ int RM_RESSOURCE_MODEL_update(int* domid_list, int num_domains)
             ressource_data = realloc(ressource_data, (domid_list[i] + 1) * sizeof(domain_load_t));
             if(ressource_data == NULL)
                 return -1;
+
+            for(j = max_domain_id; j < domid_list[i]; j++)
+            {
+                ressource_data[j] = (domain_load_t) {0, 0.0, 0.0, 0};
+            }
+
             max_domain_id = domid_list[i];
         }
 
         // save current domain load
+        ressource_data[i].iterations++;
         ressource_data[i].dom_id = domid_list[i];
         ressource_data[i].cpu_load = cpuload;
         ressource_data[i].mem_load = memload;
