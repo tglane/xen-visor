@@ -67,7 +67,7 @@ int main(void)
     if(initHandle() < 0)
         exit(0);
 
-    for(i = 0; i < 10; i++)
+    for(i = 0; i < 100; i++)
     {
         main_ressource_checker();
         sleep(1);

@@ -59,13 +59,13 @@ int RM_RESSOURCE_MODEL_update(int* domid_list, int num_domains)
         }
         else
         {
+            ressource_data[domid_list[i]].iterations++;
+
             ressource_data[domid_list[i]].dom_id = domid_list[i];
             ressource_data[domid_list[i]].cpu_load = ressource_data[domid_list[i]].cpu_load + 
                 ((cpuload - ressource_data[domid_list[i]].cpu_load) / ressource_data[domid_list[i]].iterations);
             ressource_data[domid_list[i]].mem_load = ressource_data[domid_list[i]].mem_load + 
                 ((memload - ressource_data[domid_list[i]].mem_load) / ressource_data[domid_list[i]].iterations);
-            
-            ressource_data[domid_list[i]].iterations++;
         }
     }
 
