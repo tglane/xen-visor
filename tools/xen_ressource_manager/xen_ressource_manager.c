@@ -32,11 +32,8 @@ int main_ressource_manager(void)
         // Get the load data from all exciting domains
         for(i = 0; i < num_domains; i++)
         {
-            adapt_ressources(&domain_load[domid_list[i]]);
-            //printf("ID: %d; MEM: %f; CPU: %f; Iterations: %ld\n", domid_list[i], 
-            //        domain_load[domid_list[i]].mem_load,
-            //        domain_load[domid_list[i]].cpu_load, 
-            //        domain_load[domid_list[i]].iterations);
+            if(domain_load[domid_list[i]].iterations > 0)
+                adapt_ressources(&domain_load[domid_list[i]]);
         }
     }
     printf("\n");
