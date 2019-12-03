@@ -6,7 +6,14 @@
 #include <rm_xl.h>
 #include <rm_ressource_model.h>
 
-int main_ressource_checker(void)
+int adapt_ressources(domain_load_t* load)
+{
+    printf("ID: %d; CPU: %f; MEM: %f; Iterations: %ld\n", load->dom_id, load->cpu_load, load->mem_load, load->iterations);
+    // TODO
+    return 1; 
+}
+
+int main_ressource_manager(void)
 {
     int num_domains, num_entries, i;
     int* domid_list;
@@ -25,12 +32,14 @@ int main_ressource_checker(void)
         // Get the load data from all exciting domains
         for(i = 0; i < num_domains; i++)
         {
-            printf("ID: %d; MEM: %f; CPU: %f; Iterations: %ld\n", domain_load[domid_list[i]].dom_id, 
-                    domain_load[domid_list[i]].mem_load,
-                    domain_load[domid_list[i]].cpu_load, 
-                    domain_load[domid_list[i]].iterations);
+            adapt_ressources(&domain_load[domid_list[i]]);
+            //printf("ID: %d; MEM: %f; CPU: %f; Iterations: %ld\n", domid_list[i], 
+            //        domain_load[domid_list[i]].mem_load,
+            //        domain_load[domid_list[i]].cpu_load, 
+            //        domain_load[domid_list[i]].iterations);
         }
     }
+    printf("\n");
 
     // test cpu and ram change
     /*if(num_domains > 1)
@@ -69,7 +78,7 @@ int main(void)
 
     for(i = 0; i < 100; i++)
     {
-        main_ressource_checker();
+        main_ressource_manager();
         sleep(1);
     }
 

@@ -9,13 +9,17 @@ static int max_domain_id = 0;
 
 void RM_RESSOURCE_MODEL_init(void)
 {
-    ressource_data = malloc(sizeof(domain_load_t));
-    ressource_data[0] = (domain_load_t) {0, 0.0, 0.0, 0};
+    if(ressource_data == NULL)
+    {
+        ressource_data = malloc(sizeof(domain_load_t));
+        ressource_data[0] = (domain_load_t) {0, 0.0, 0.0, 0};
+    }
 }
 
 void RM_RESSOURCE_MODEL_free(void)
 {
-    free(ressource_data);
+    if(ressource_data != NULL)
+        free(ressource_data);
 }
 
 int RM_RESSOURCE_MODEL_update(int* domid_list, int num_domains)
