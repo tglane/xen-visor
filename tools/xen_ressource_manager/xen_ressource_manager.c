@@ -5,13 +5,7 @@
 #include <rm_xenstore.h>
 #include <rm_xl.h>
 #include <rm_ressource_model.h>
-
-int adapt_ressources(domain_load_t* load)
-{
-    printf("ID: %d; CPU: %f; MEM: %f; Iterations: %ld\n", load->dom_id, load->cpu_load, load->mem_load, load->iterations);
-    // TODO
-    return 1; 
-}
+#include <rm_allocator.h>
 
 int main_ressource_manager(void)
 {
@@ -33,7 +27,7 @@ int main_ressource_manager(void)
         for(i = 0; i < num_domains; i++)
         {
             if(domain_load[domid_list[i]].iterations > 0)
-                adapt_ressources(&domain_load[domid_list[i]]);
+                RM_ALLOCATOR_allocation_ask(&domain_load[domid_list[i]]);
         }
     }
     printf("\n");
