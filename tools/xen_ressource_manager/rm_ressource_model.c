@@ -53,8 +53,7 @@ int RM_RESSOURCE_MODEL_update(int* domid_list, int num_domains)
         }
 
        
-        // Save current domain load
-        // TODO calculate average load
+        // Save current domain load and calculate average load
         if(memload < 0 || cpuload < 0)
         {
             ressource_data[domid_list[i]].dom_id = domid_list[i];

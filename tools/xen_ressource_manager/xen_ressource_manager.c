@@ -30,6 +30,9 @@ int main_ressource_manager(void)
                 RM_ALLOCATOR_allocation_ask(&domain_load[domid_list[i]]);
         }
     }
+
+    RM_ALLOCATOR_ressource_adjustment(domid_list, num_domains);    
+
     printf("\n");
 
     // test cpu and ram change

@@ -65,13 +65,34 @@ int* RM_XL_get_domain_list(int* num_dom_out)
     return domid_list;
 }
 
+int RM_XL_get_host_cpu(void)
+{
+    if(ctx == NULL)
+        return -1;
+
+    return libxl_get_max_cpus(ctx);
+}
+
+int64_t RM_XL_get_host_mem_total(void)
+{
+    libxl_physinfo info;
+
+    // TODO
+    if(ctx == NULL)
+        return -1;    
+
+    if(libxl_get_physinfo(ctx, &info) != 0)
+        return -1;
+    return info.total_pages;
+}
+
 int RM_XL_change_vcpu(int domid, int change_vcpus)
 {
     libxl_dominfo domain_info;
     libxl_bitmap cpu_map;
     unsigned int i, online_vcpus, host_cpus;
 
-    if(ctx == NULL)
+    if(ctx == NULL || change_vcpus == 0)
         return -1;
 
     host_cpus = libxl_get_max_cpus(ctx);
@@ -101,7 +122,7 @@ int RM_XL_change_memory(int domid, int64_t change_kb)
 {
     uint64_t memory_online;
 
-    if(ctx == NULL)
+    if(ctx == NULL || change_kb == 0)
         return -1;
 
     if(libxl_get_memory_target(ctx, domid, &memory_online))
