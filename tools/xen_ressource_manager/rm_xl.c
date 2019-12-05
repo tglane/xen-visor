@@ -99,7 +99,7 @@ int RM_XL_change_vcpu(int domid, int change_vcpus)
     libxl_domain_info(ctx, &domain_info, domid);
     online_vcpus = domain_info.vcpu_online;
 
-    if(online_vcpus + change_vcpus > host_cpus && online_vcpus + change_vcpus <= 0)
+    if(online_vcpus + change_vcpus > host_cpus || online_vcpus + change_vcpus <= 0)
     {
         libxl_dominfo_dispose(&domain_info);
         return -1;

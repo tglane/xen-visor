@@ -82,7 +82,8 @@ int RM_ALLOCATOR_ressource_adjustment(int* domid_list, int num_domains)
         // Resolve all allocation asks
         for(i = 0; i < num_domains; i++)
         {
-            if(alloc_ask[domid_list[i]].cpu_ask != 0) RM_XL_change_vcpu(domid_list[i], alloc_ask[domid_list[i]].cpu_ask);
+            if(alloc_ask[domid_list[i]].cpu_ask != 0) 
+                RM_XL_change_vcpu(domid_list[i], alloc_ask[domid_list[i]].cpu_ask);
         }
     }
     else
@@ -96,7 +97,8 @@ int RM_ALLOCATOR_ressource_adjustment(int* domid_list, int num_domains)
     {
         for(i = 0; i < num_domains; i++)
         {
-            if(alloc_ask[domid_list[i]].mem_ask != 0) RM_XL_change_memory(domid_list[i], alloc_ask[domid_list[i]].mem_ask); 
+            if(alloc_ask[domid_list[i]].mem_ask != 0) 
+                RM_XL_change_memory(domid_list[i], 100000 * alloc_ask[domid_list[i]].mem_ask); 
         }
     }
     else
