@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <rm_xl.h>
 
+#define MEM_STEP 100000
+
 static int RM_ALLOCATOR_resolve_cpu_allocations(libxl_dominfo* dom_list, int num_domains);
 
 static int RM_ALLOCATOR_resolve_mem_allocations(libxl_dominfo* dom_list, int  num_domains);
@@ -25,7 +27,7 @@ static allocation_ask_t* alloc_ask;
 static unsigned int num_domains = 0;
 static allocation_summary_t alloc_summary = (allocation_summary_t) {0, 0, 0, 0};
 
-int RM_ALLOCATOR_allocation_ask(domain_load_t* domain)
+int RM_ALLOCATOR_allocation_ask(domain_load_t* domain, libxl_dominfo dom_info)
 {
     printf("ID: %d; CPU: %f; MEM: %f\n", domain->dom_id, domain->cpu_load, domain->mem_load);
    
@@ -36,15 +38,16 @@ int RM_ALLOCATOR_allocation_ask(domain_load_t* domain)
             return -1;
     }
     
-    // TODO only reduce if cpu|mem after change > 0 (not importatn, check in rm_xl functions)
+    // TODO only reduce if cpu|mem after change > 0
+    // TODO only increase if cpu|mem after change < total
 
     // Ressource allocation ask for vcpus
-    if(domain->cpu_load > 80)
+    if(domain->cpu_load > 80 && (dom_info.vcpu_online + 1 < RM_XL_get_host_cpu()))
     { 
         alloc_ask[domain->dom_id].cpu_ask = 1;
         alloc_summary.cpu_add++;
     }
-    else if(domain->cpu_load < 20)
+    else if(domain->cpu_load < 20 && (dom_info.vcpu_online - 1 > 0))
     {
         alloc_ask[domain->dom_id].cpu_ask = -1;
         alloc_summary.cpu_reduce++;
@@ -55,12 +58,12 @@ int RM_ALLOCATOR_allocation_ask(domain_load_t* domain)
     }
 
     // Ressource allocation ask for memory
-    if(domain->mem_load > 90)
+    if(domain->mem_load > 90 && ((dom_info.current_memkb + dom_info.outstanding_memkb + MEM_STEP) < RM_XL_get_host_mem_total()))
     {
         alloc_ask[domain->dom_id].mem_ask = 1;
         alloc_summary.mem_add++; 
     }
-    else if(domain->mem_load < 50)
+    else if(domain->mem_load < 40 && ((dom_info.current_memkb + dom_info.outstanding_memkb - MEM_STEP) > 250000))
     {
         alloc_ask[domain->dom_id].mem_ask = -1;
         alloc_summary.mem_reduce++;
@@ -97,14 +100,14 @@ int RM_ALLOCATOR_ressource_adjustment(libxl_dominfo* dom_list, int num_domains)
     }
 
     // Resolve MEM allocation
-    // TODO add if(mem_add - mem_reduce < host_mem_total - host_mem_used)
+    // TODO add if(mem_add - mem_reduce < host_mem_RESSOURCE_MODEL_get_used_memory)
     if((alloc_summary.mem_reduce >= alloc_summary.mem_add) || 
         (alloc_summary.mem_add - alloc_summary.mem_reduce < RM_XL_get_host_mem_total() - RM_RESSOURCE_MODEL_get_used_memory()))
     {
         for(i = 0; i < num_domains; i++)
         {
             if(alloc_ask[dom_list[i].domid].mem_ask != 0) 
-                RM_XL_change_memory(dom_list[i].domid, 100000 * alloc_ask[dom_list[i].domid].mem_ask); 
+                RM_XL_change_memory(dom_list[i].domid, MEM_STEP * alloc_ask[dom_list[i].domid].mem_ask); 
         }
     }
     else

@@ -40,7 +40,7 @@ int main_ressource_manager(void)
         for(i = 0; i < num_domains; i++)
         {
             if(domain_load[dom_list[i].domid].dom_id >= 0)
-                RM_ALLOCATOR_allocation_ask(&domain_load[dom_list[i].domid]);
+                RM_ALLOCATOR_allocation_ask(&domain_load[dom_list[i].domid], dom_list[i]);
         }
     }
 
