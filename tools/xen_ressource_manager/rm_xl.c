@@ -74,19 +74,6 @@ int64_t RM_XL_get_host_mem_total(void)
     return info.total_pages;
 }
 
-int RM_XL_get_host_cpu_usage(void)
-{
-    // TODO
-    
-    return 0;
-}
-
-int64_t RM_XL_get_host_mem_usage(void)
-{
-    // TODO
-    return 0;
-}
-
 int RM_XL_change_vcpu(int domid, int change_vcpus)
 {
     libxl_dominfo domain_info;

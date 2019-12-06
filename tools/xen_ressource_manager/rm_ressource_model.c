@@ -8,6 +8,9 @@
 static domain_load_t* ressource_data;
 static int max_domain_id = 0;
 
+static unsigned int host_cpus_used = 0;
+static uint64_t host_memory_used = 0;
+
 void RM_RESSOURCE_MODEL_init(void)
 {
     if(ressource_data == NULL)
@@ -23,6 +26,16 @@ void RM_RESSOURCE_MODEL_free(void)
         free(ressource_data);
 }
 
+int RM_RESSOURCE_MODEL_get_used_cpus(void)
+{
+    return host_cpus_used;
+}
+
+int64_t RM_RESSOURCE_MODEL_get_used_memory(void)
+{
+    return host_memory_used;
+}
+
 int RM_RESSOURCE_MODEL_update(libxl_dominfo* dom_list, int num_domains)
 {
     int i, j;
@@ -32,6 +45,9 @@ int RM_RESSOURCE_MODEL_update(libxl_dominfo* dom_list, int num_domains)
     {
         return -1;
     }
+
+    host_cpus_used = 0;
+    host_memory_used = 0;
 
     for(i = 0; i < num_domains; i++)
     {
@@ -51,8 +67,11 @@ int RM_RESSOURCE_MODEL_update(libxl_dominfo* dom_list, int num_domains)
         }
 
         memload = RM_XENSTORE_read_domain_memload(dom_list[i].domid);
-        cpuload = RM_XENSTORE_read_domain_cpuload(dom_list[i].domid);
-      
+        cpuload = RM_XENSTORE_read_domain_cpuload(dom_list[i].domid); 
+
+        host_cpus_used += dom_list[i].vcpu_online;
+        host_memory_used += (dom_list[i].current_memkb + dom_list[i].outstanding_memkb);
+
         // Save current domain load and calculate average load only if there is load data
         if(memload < 0 || cpuload < 0)
         {
@@ -70,15 +89,15 @@ int RM_RESSOURCE_MODEL_update(libxl_dominfo* dom_list, int num_domains)
                 (WEIGHT * memload) + (1.0 - WEIGHT) * ressource_data[dom_list[i].domid].mem_load;
 
             // Moving average
-            /*ressource_data[domid_list[i]].iterations++;
+            /*ressource_data[dom_list[i].domid].iterations++;
 
-            ressource_data[domid_list[i]].dom_id = domid_list[i];
+            ressource_data[dom_list[i].domid].dom_id = dom_list[i].domid;
             
-            ressource_data[domid_list[i]].cpu_load = ressource_data[domid_list[i]].cpu_load + 
-                ((cpuload - ressource_data[domid_list[i]].cpu_load) / ressource_data[domid_list[i]].iterations);
+            ressource_data[dom_list[i].domid].cpu_load = ressource_data[dom_list[i].domid].cpu_load + 
+                ((cpuload - ressource_data[dom_list[i].domid].cpu_load) / ressource_data[dom_list[i].domid].iterations);
             
-            ressource_data[domid_list[i]].mem_load = ressource_data[domid_list[i]].mem_load + 
-                ((memload - ressource_data[domid_list[i]].mem_load) / ressource_data[domid_list[i]].iterations);*/
+            ressource_data[dom_list[i].domid].mem_load = ressource_data[dom_list[i].domid].mem_load + 
+                ((memload - ressource_data[dom_list[i].domid].mem_load) / ressource_data[dom_list[i].domid].iterations);*/
         }
     }
 
@@ -89,6 +108,5 @@ domain_load_t* RM_RESSOURCE_MODEL_get_ressource_data(int* num_entries)
 {
     *num_entries = max_domain_id + 1;
     return ressource_data;
-    
 }
 
