@@ -7,6 +7,8 @@
 
 #include <stdio.h>
 
+#define DOMAIN_MIN_MEM 250000
+
 static libxl_ctx* ctx;
 static xentoollog_logger_stdiostream* logger;
 
@@ -129,9 +131,12 @@ int RM_XL_change_memory(int domid, int64_t change_kb)
         return -1;
      
     memory_online += change_kb;
-    if(libxl_set_memory_target(ctx, domid, memory_online, 0, 1))
-        return -1;
-
-    return 0;
+    if(memory_online >= DOMAIN_MIN_MEM)
+    {
+        if(libxl_set_memory_target(ctx, domid, memory_online, 0, 1))
+            return -1;
+        return 0;
+    }
+    return -1;
 }
 

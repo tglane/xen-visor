@@ -70,7 +70,7 @@ int main(void)
     if(initHandle() < 0)
         exit(0);
 
-    for(i = 0; i < 100; i++)
+    for(i = 0; i < 1000; i++)
     {
         main_ressource_manager();
         sleep(1);

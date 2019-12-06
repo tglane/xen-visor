@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <rm_xenstore.h>
 
+#define WEIGHT 0.75
+
 static domain_load_t* ressource_data;
 static int max_domain_id = 0;
 
@@ -53,22 +55,35 @@ int RM_RESSOURCE_MODEL_update(int* domid_list, int num_domains)
         }
 
        
-        // Save current domain load and calculate average load
+        // Save current domain load and calculate average load only if there is load data
         if(memload < 0 || cpuload < 0)
         {
             ressource_data[domid_list[i]].dom_id = domid_list[i];
             ressource_data[domid_list[i]].cpu_load = 0;
             ressource_data[domid_list[i]].mem_load = 0;
+            ressource_data[domid_list[i]].iterations = 0;
         }
         else
         {
-            ressource_data[domid_list[i]].iterations++;
+            printf("test\n");
+            // Exponential moving average
+            ressource_data[domid_list[i]].iterations = 1;
+            ressource_data[domid_list[i]].dom_id = domid_list[i];
+            ressource_data[domid_list[i]].cpu_load = 
+                (WEIGHT * cpuload) + (1.0 - WEIGHT) * ressource_data[domid_list[i]].cpu_load;
+            ressource_data[domid_list[i]].mem_load = 
+                (WEIGHT * memload) + (1.0 - WEIGHT) * ressource_data[domid_list[i]].mem_load;
+
+            // Moving average
+            /*ressource_data[domid_list[i]].iterations++;
 
             ressource_data[domid_list[i]].dom_id = domid_list[i];
+            
             ressource_data[domid_list[i]].cpu_load = ressource_data[domid_list[i]].cpu_load + 
                 ((cpuload - ressource_data[domid_list[i]].cpu_load) / ressource_data[domid_list[i]].iterations);
+            
             ressource_data[domid_list[i]].mem_load = ressource_data[domid_list[i]].mem_load + 
-                ((memload - ressource_data[domid_list[i]].mem_load) / ressource_data[domid_list[i]].iterations);
+                ((memload - ressource_data[domid_list[i]].mem_load) / ressource_data[domid_list[i]].iterations);*/
         }
     }
 
