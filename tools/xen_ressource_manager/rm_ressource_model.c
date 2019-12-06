@@ -23,7 +23,7 @@ void RM_RESSOURCE_MODEL_free(void)
         free(ressource_data);
 }
 
-int RM_RESSOURCE_MODEL_update(int* domid_list, int num_domains)
+int RM_RESSOURCE_MODEL_update(libxl_dominfo* dom_list, int num_domains)
 {
     int i, j;
     double memload, cpuload;
@@ -36,38 +36,38 @@ int RM_RESSOURCE_MODEL_update(int* domid_list, int num_domains)
     for(i = 0; i < num_domains; i++)
     {
         // Realloc memory for ressource_data if max_domain_id is lower than current id
-        if(domid_list[i] > max_domain_id)
+        if(dom_list[i].domid > max_domain_id)
         {
-            ressource_data = realloc(ressource_data, (domid_list[i] + 1) * sizeof(domain_load_t));
+            ressource_data = realloc(ressource_data, (dom_list[i].domid + 1) * sizeof(domain_load_t));
             if(ressource_data == NULL)
                 return -1;
 
-            for(j = max_domain_id + 1; j < domid_list[i]; j++)
+            for(j = max_domain_id + 1; j < dom_list[i].domid; j++)
             {
                 ressource_data[j] = (domain_load_t) {-1, 0.0, 0.0};
             }
 
-            max_domain_id = domid_list[i];
+            max_domain_id = dom_list[i].domid;
         }
 
-        memload = RM_XENSTORE_read_domain_memload(domid_list[i]);
-        cpuload = RM_XENSTORE_read_domain_cpuload(domid_list[i]);
+        memload = RM_XENSTORE_read_domain_memload(dom_list[i].domid);
+        cpuload = RM_XENSTORE_read_domain_cpuload(dom_list[i].domid);
       
         // Save current domain load and calculate average load only if there is load data
         if(memload < 0 || cpuload < 0)
         {
-            ressource_data[domid_list[i]].dom_id = -1;
-            ressource_data[domid_list[i]].cpu_load = 0;
-            ressource_data[domid_list[i]].mem_load = 0;
+            ressource_data[dom_list[i].domid].dom_id = -1;
+            ressource_data[dom_list[i].domid].cpu_load = 0;
+            ressource_data[dom_list[i].domid].mem_load = 0;
         }
         else
         {
             // Calculate exponential moving average
-            ressource_data[domid_list[i]].dom_id = domid_list[i];
-            ressource_data[domid_list[i]].cpu_load = 
-                (WEIGHT * cpuload) + (1.0 - WEIGHT) * ressource_data[domid_list[i]].cpu_load;
-            ressource_data[domid_list[i]].mem_load = 
-                (WEIGHT * memload) + (1.0 - WEIGHT) * ressource_data[domid_list[i]].mem_load;
+            ressource_data[dom_list[i].domid].dom_id = dom_list[i].domid;
+            ressource_data[dom_list[i].domid].cpu_load = 
+                (WEIGHT * cpuload) + (1.0 - WEIGHT) * ressource_data[dom_list[i].domid].cpu_load;
+            ressource_data[dom_list[i].domid].mem_load = 
+                (WEIGHT * memload) + (1.0 - WEIGHT) * ressource_data[dom_list[i].domid].mem_load;
 
             // Moving average
             /*ressource_data[domid_list[i]].iterations++;

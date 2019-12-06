@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include <stdint.h>
+#include <libxl.h>
 
 int RM_XL_init(void);
 
@@ -11,7 +12,7 @@ void RM_XL_close(void);
 /*
  * Do not forget to free returned int array!
  */
-int* RM_XL_get_domain_list(int* num_dom_out);
+libxl_dominfo* RM_XL_get_domain_list(int* num_dom_out);
 
 int RM_XL_get_host_cpu(void);
 

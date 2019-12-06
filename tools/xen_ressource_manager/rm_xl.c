@@ -1,6 +1,5 @@
 #include <rm_xl.h>
 
-#include <libxl.h>
 #include <libxl_utils.h>
 #include <libxlutil.h>
 #include <xentoollog.h>
@@ -41,30 +40,18 @@ void RM_XL_close(void)
     }
 }
 
-int* RM_XL_get_domain_list(int* num_dom_out)
+libxl_dominfo* RM_XL_get_domain_list(int* num_dom_out)
 {
     struct libxl_dominfo* info;
-    int i;
-    int* domid_list;
 
     if(ctx == NULL)
         return NULL;
 
-    //libxl_dominfo_init(info);
     info = libxl_list_domain(ctx, num_dom_out);
     if(info == NULL)
         return NULL;
     
-    domid_list = malloc(*num_dom_out * sizeof(int));
-
-    for(i = 0; i < *num_dom_out; i++)
-    {
-        domid_list[i] = info[i].domid;
-    }
-
-    libxl_dominfo_list_free(info, *num_dom_out); 
-
-    return domid_list;
+    return info;
 }
 
 int RM_XL_get_host_cpu(void)
@@ -90,6 +77,7 @@ int64_t RM_XL_get_host_mem_total(void)
 int RM_XL_get_host_cpu_usage(void)
 {
     // TODO
+    
     return 0;
 }
 

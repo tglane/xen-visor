@@ -23,14 +23,14 @@ int initHandle(void)
 int main_ressource_manager(void)
 {
     int num_domains, num_entries, i;
-    int* domid_list;
+    libxl_dominfo* dom_list;
     domain_load_t* domain_load;
     
-    domid_list = RM_XL_get_domain_list(&num_domains);
-    if(domid_list == NULL)
+    dom_list = RM_XL_get_domain_list(&num_domains);
+    if(dom_list == NULL)
         return -1;
     
-    RM_RESSOURCE_MODEL_update(domid_list, num_domains);
+    RM_RESSOURCE_MODEL_update(dom_list, num_domains);
     domain_load = RM_RESSOURCE_MODEL_get_ressource_data(&num_entries);
   
     printf("num_domains: %d; num_entries: %d\n", num_domains, num_entries); 
@@ -39,12 +39,12 @@ int main_ressource_manager(void)
         // Get the load data from all exciting domains
         for(i = 0; i < num_domains; i++)
         {
-            if(domain_load[domid_list[i]].dom_id >= 0)
-                RM_ALLOCATOR_allocation_ask(&domain_load[domid_list[i]]);
+            if(domain_load[dom_list[i].domid].dom_id >= 0)
+                RM_ALLOCATOR_allocation_ask(&domain_load[dom_list[i].domid]);
         }
     }
 
-    RM_ALLOCATOR_ressource_adjustment(domid_list, num_domains);    
+    RM_ALLOCATOR_ressource_adjustment(dom_list, num_domains);    
 
     printf("\n");
 
@@ -58,7 +58,7 @@ int main_ressource_manager(void)
             printf("added memory to domain 1\n");
     }*/
 
-    free(domid_list);
+    libxl_dominfo_list_free(dom_list, num_domains);
 
     return 0;
 }

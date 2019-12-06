@@ -3,9 +3,9 @@
 #include <stdio.h>
 #include <rm_xl.h>
 
-static int RM_ALLOCATOR_resolve_cpu_allocations(int* domid_list, int num_domains);
+static int RM_ALLOCATOR_resolve_cpu_allocations(libxl_dominfo* dom_list, int num_domains);
 
-static int RM_ALLOCATOR_resolve_mem_allocations(int* domid_list, int  num_domains);
+static int RM_ALLOCATOR_resolve_mem_allocations(libxl_dominfo* dom_list, int  num_domains);
 
 struct allocation_ask {
     int cpu_ask;
@@ -75,7 +75,7 @@ int RM_ALLOCATOR_allocation_ask(domain_load_t* domain)
     return 0;
 }
 
-int RM_ALLOCATOR_ressource_adjustment(int* domid_list, int num_domains)
+int RM_ALLOCATOR_ressource_adjustment(libxl_dominfo* dom_list, int num_domains)
 {
     int i;
 
@@ -87,13 +87,13 @@ int RM_ALLOCATOR_ressource_adjustment(int* domid_list, int num_domains)
         // Resolve all allocation asks
         for(i = 0; i < num_domains; i++)
         {
-            if(alloc_ask[domid_list[i]].cpu_ask != 0) 
-                RM_XL_change_vcpu(domid_list[i], alloc_ask[domid_list[i]].cpu_ask);
+            if(alloc_ask[dom_list[i].domid].cpu_ask != 0) 
+                RM_XL_change_vcpu(dom_list[i].domid, alloc_ask[dom_list[i].domid].cpu_ask);
         }
     }
     else
     {
-        RM_ALLOCATOR_resolve_cpu_allocations(domid_list, num_domains);
+        RM_ALLOCATOR_resolve_cpu_allocations(dom_list, num_domains);
     }
 
     // Resolve MEM allocation
@@ -103,25 +103,25 @@ int RM_ALLOCATOR_ressource_adjustment(int* domid_list, int num_domains)
     {
         for(i = 0; i < num_domains; i++)
         {
-            if(alloc_ask[domid_list[i]].mem_ask != 0) 
-                RM_XL_change_memory(domid_list[i], 100000 * alloc_ask[domid_list[i]].mem_ask); 
+            if(alloc_ask[dom_list[i].domid].mem_ask != 0) 
+                RM_XL_change_memory(dom_list[i].domid, 100000 * alloc_ask[dom_list[i].domid].mem_ask); 
         }
     }
     else
     {
-        RM_ALLOCATOR_resolve_mem_allocations(domid_list, num_domains);
+        RM_ALLOCATOR_resolve_mem_allocations(dom_list, num_domains);
     }
 
     return 0;
 }
 
-static int RM_ALLOCATOR_resolve_cpu_allocations(int* domid_list, int num_domains)
+static int RM_ALLOCATOR_resolve_cpu_allocations(libxl_dominfo* dom_list, int num_domains)
 {
     // TODO
     return 0;
 }
 
-static int RM_ALLOCATOR_resolve_mem_allocations(int* domid_list, int num_domains)
+static int RM_ALLOCATOR_resolve_mem_allocations(libxl_dominfo* dom_list, int num_domains)
 {
     // TODO
     return 0;
