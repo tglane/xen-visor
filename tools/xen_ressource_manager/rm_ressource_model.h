@@ -5,7 +5,6 @@ struct domain_load {
     int dom_id;
     double cpu_load;
     double mem_load;
-    unsigned long iterations;
 };
 typedef struct domain_load domain_load_t;
 

@@ -7,6 +7,19 @@
 #include <rm_ressource_model.h>
 #include <rm_allocator.h>
 
+int initHandle(void)
+{
+    if(RM_XL_init() < 0)
+        return -1;
+
+    if(RM_XENSTORE_init() < 0)
+        return -1;
+
+    RM_RESSOURCE_MODEL_init();
+
+    return 0;
+}
+
 int main_ressource_manager(void)
 {
     int num_domains, num_entries, i;
@@ -26,7 +39,7 @@ int main_ressource_manager(void)
         // Get the load data from all exciting domains
         for(i = 0; i < num_domains; i++)
         {
-            if(domain_load[domid_list[i]].iterations > 0)
+            if(domain_load[domid_list[i]].dom_id >= 0)
                 RM_ALLOCATOR_allocation_ask(&domain_load[domid_list[i]]);
         }
     }
@@ -46,19 +59,6 @@ int main_ressource_manager(void)
     }*/
 
     free(domid_list);
-
-    return 0;
-}
-
-int initHandle(void)
-{
-    if(RM_XL_init() < 0)
-        return -1;
-
-    if(RM_XENSTORE_init() < 0)
-        return -1;
-
-    RM_RESSOURCE_MODEL_init();
 
     return 0;
 }

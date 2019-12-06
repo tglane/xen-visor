@@ -3,6 +3,10 @@
 #include <stdio.h>
 #include <rm_xl.h>
 
+static int RM_ALLOCATOR_resolve_cpu_allocations(int* domid_list, int num_domains);
+
+static int RM_ALLOCATOR_resolve_mem_allocations(int* domid_list, int  num_domains);
+
 struct allocation_ask {
     int cpu_ask;
     int mem_ask;
@@ -23,7 +27,7 @@ static allocation_summary_t alloc_summary = (allocation_summary_t) {0, 0, 0, 0};
 
 int RM_ALLOCATOR_allocation_ask(domain_load_t* domain)
 {
-    printf("ID: %d; CPU: %f; MEM: %f; Iterations: %ld\n", domain->dom_id, domain->cpu_load, domain->mem_load, domain->iterations);
+    printf("ID: %d; CPU: %f; MEM: %f\n", domain->dom_id, domain->cpu_load, domain->mem_load);
    
     if(domain->dom_id >= num_domains)
     {
@@ -32,7 +36,7 @@ int RM_ALLOCATOR_allocation_ask(domain_load_t* domain)
             return -1;
     }
     
-    // TODO only reduce if cpu|mem after change > 0
+    // TODO only reduce if cpu|mem after change > 0 (not importatn, check in rm_xl functions)
 
     // Ressource allocation ask for vcpus
     if(domain->cpu_load > 80)
@@ -76,8 +80,9 @@ int RM_ALLOCATOR_ressource_adjustment(int* domid_list, int num_domains)
     int i;
 
     // Resolve CPU allocations
+    // TODO add if(cpu_add - cpu_reduce < total_host_cpu - host_cpu_used)
     if((alloc_summary.cpu_reduce >= alloc_summary.cpu_add) || 
-        (alloc_summary.cpu_add - alloc_summary.cpu_reduce < RM_XL_get_host_cpu()))
+        (alloc_summary.cpu_add - alloc_summary.cpu_reduce < RM_XL_get_host_cpu() - RM_XL_get_host_cpu_usage()))
     {
         // Resolve all allocation asks
         for(i = 0; i < num_domains; i++)
@@ -88,12 +93,13 @@ int RM_ALLOCATOR_ressource_adjustment(int* domid_list, int num_domains)
     }
     else
     {
-        // TODO
+        RM_ALLOCATOR_resolve_cpu_allocations(domid_list, num_domains);
     }
 
     // Resolve MEM allocation
+    // TODO add if(mem_add - mem_reduce < host_mem_total - host_mem_used)
     if((alloc_summary.mem_reduce >= alloc_summary.mem_add) || 
-        (alloc_summary.mem_add - alloc_summary.mem_reduce < RM_XL_get_host_mem_total()))
+        (alloc_summary.mem_add - alloc_summary.mem_reduce < RM_XL_get_host_mem_total() - RM_XL_get_host_mem_usage()))
     {
         for(i = 0; i < num_domains; i++)
         {
@@ -103,9 +109,21 @@ int RM_ALLOCATOR_ressource_adjustment(int* domid_list, int num_domains)
     }
     else
     {
-        // TODO
+        RM_ALLOCATOR_resolve_mem_allocations(domid_list, num_domains);
     }
 
+    return 0;
+}
+
+static int RM_ALLOCATOR_resolve_cpu_allocations(int* domid_list, int num_domains)
+{
+    // TODO
+    return 0;
+}
+
+static int RM_ALLOCATOR_resolve_mem_allocations(int* domid_list, int num_domains)
+{
+    // TODO
     return 0;
 }
 

@@ -79,13 +79,24 @@ int64_t RM_XL_get_host_mem_total(void)
 {
     libxl_physinfo info;
 
-    // TODO
     if(ctx == NULL)
         return -1;    
 
     if(libxl_get_physinfo(ctx, &info) != 0)
         return -1;
     return info.total_pages;
+}
+
+int RM_XL_get_host_cpu_usage(void)
+{
+    // TODO
+    return 0;
+}
+
+int64_t RM_XL_get_host_mem_usage(void)
+{
+    // TODO
+    return 0;
 }
 
 int RM_XL_change_vcpu(int domid, int change_vcpus)
@@ -119,9 +130,11 @@ int RM_XL_change_vcpu(int domid, int change_vcpus)
     return 0;
 }
 
-// TODO check if new memory amount is lower than static_mem_max
 int RM_XL_change_memory(int domid, int64_t change_kb)
 {
+    // TODO what about domains static-max memory value?
+
+    libxl_physinfo info;
     uint64_t memory_online;
 
     if(ctx == NULL || change_kb == 0)
@@ -129,9 +142,12 @@ int RM_XL_change_memory(int domid, int64_t change_kb)
 
     if(libxl_get_memory_target(ctx, domid, &memory_online))
         return -1;
+
+    if(libxl_get_physinfo(ctx, &info) != 0)
+        return -1;
      
     memory_online += change_kb;
-    if(memory_online >= DOMAIN_MIN_MEM)
+    if(memory_online >= DOMAIN_MIN_MEM && memory_online >= info.total_pages)
     {
         if(libxl_set_memory_target(ctx, domid, memory_online, 0, 1))
             return -1;

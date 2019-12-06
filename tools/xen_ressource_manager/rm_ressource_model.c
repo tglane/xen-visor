@@ -1,7 +1,6 @@
 #include <rm_ressource_model.h>
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <rm_xenstore.h>
 
 #define WEIGHT 0.75
@@ -14,7 +13,7 @@ void RM_RESSOURCE_MODEL_init(void)
     if(ressource_data == NULL)
     {
         ressource_data = malloc(sizeof(domain_load_t));
-        ressource_data[0] = (domain_load_t) {0, 0.0, 0.0, 0};
+        ressource_data[0] = (domain_load_t) {-1, 0.0, 0.0};
     }
 }
 
@@ -36,9 +35,6 @@ int RM_RESSOURCE_MODEL_update(int* domid_list, int num_domains)
 
     for(i = 0; i < num_domains; i++)
     {
-        memload = RM_XENSTORE_read_domain_memload(domid_list[i]);
-        cpuload = RM_XENSTORE_read_domain_cpuload(domid_list[i]);
-
         // Realloc memory for ressource_data if max_domain_id is lower than current id
         if(domid_list[i] > max_domain_id)
         {
@@ -48,26 +44,25 @@ int RM_RESSOURCE_MODEL_update(int* domid_list, int num_domains)
 
             for(j = max_domain_id + 1; j < domid_list[i]; j++)
             {
-                ressource_data[j] = (domain_load_t) {0, 0.0, 0.0, 0};
+                ressource_data[j] = (domain_load_t) {-1, 0.0, 0.0};
             }
 
             max_domain_id = domid_list[i];
         }
 
-       
+        memload = RM_XENSTORE_read_domain_memload(domid_list[i]);
+        cpuload = RM_XENSTORE_read_domain_cpuload(domid_list[i]);
+      
         // Save current domain load and calculate average load only if there is load data
         if(memload < 0 || cpuload < 0)
         {
-            ressource_data[domid_list[i]].dom_id = domid_list[i];
+            ressource_data[domid_list[i]].dom_id = -1;
             ressource_data[domid_list[i]].cpu_load = 0;
             ressource_data[domid_list[i]].mem_load = 0;
-            ressource_data[domid_list[i]].iterations = 0;
         }
         else
         {
-            printf("test\n");
-            // Exponential moving average
-            ressource_data[domid_list[i]].iterations = 1;
+            // Calculate exponential moving average
             ressource_data[domid_list[i]].dom_id = domid_list[i];
             ressource_data[domid_list[i]].cpu_load = 
                 (WEIGHT * cpuload) + (1.0 - WEIGHT) * ressource_data[domid_list[i]].cpu_load;
