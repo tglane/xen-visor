@@ -4,8 +4,6 @@
 #include <libxlutil.h>
 #include <xentoollog.h>
 
-#include <stdio.h>
-
 #define DOMAIN_MIN_MEM 250000
 
 static libxl_ctx* ctx;
@@ -128,7 +126,6 @@ int RM_XL_change_memory(int domid, int64_t change_kb)
             return -1;
         return 0;
     }
-    printf("test\n");
     return -1;
 }
 

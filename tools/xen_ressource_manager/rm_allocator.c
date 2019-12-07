@@ -83,7 +83,6 @@ int RM_ALLOCATOR_ressource_adjustment(libxl_dominfo* dom_list, int num_domains)
     int i;
 
     // Resolve CPU allocations
-    // TODO add if(cpu_add - cpu_reduce < total_host_cpu - host_cpu_used)
     if((alloc_summary.cpu_reduce >= alloc_summary.cpu_add) || 
         (alloc_summary.cpu_add - alloc_summary.cpu_reduce <= RM_XL_get_host_cpu() - RM_RESSOURCE_MODEL_get_used_cpus()))
     {
@@ -100,7 +99,6 @@ int RM_ALLOCATOR_ressource_adjustment(libxl_dominfo* dom_list, int num_domains)
     }
 
     // Resolve MEM allocation
-    // TODO add if(mem_add - mem_reduce < host_mem_RESSOURCE_MODEL_get_used_memory)
     if((alloc_summary.mem_reduce >= alloc_summary.mem_add) || 
         (alloc_summary.mem_add - alloc_summary.mem_reduce <= RM_XL_get_host_mem_total() - RM_RESSOURCE_MODEL_get_used_memory()))
     {
