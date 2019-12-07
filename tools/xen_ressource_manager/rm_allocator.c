@@ -58,6 +58,7 @@ int RM_ALLOCATOR_allocation_ask(domain_load_t* domain, libxl_dominfo dom_info)
     }
 
     // Ressource allocation ask for memory
+    printf("Current: %ld; Max: %ld\n", dom_info.current_memkb + dom_info.outstanding_memkb + MEM_STEP, RM_XL_get_host_mem_total());
     if(domain->mem_load > 90 && ((dom_info.current_memkb + dom_info.outstanding_memkb + MEM_STEP) < RM_XL_get_host_mem_total()))
     {
         alloc_ask[domain->dom_id].mem_ask = 1;

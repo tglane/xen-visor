@@ -65,13 +65,19 @@ int RM_XL_get_host_cpu(void)
 int64_t RM_XL_get_host_mem_total(void)
 {
     libxl_physinfo info;
+    const libxl_version_info* vinfo;
+    unsigned int i;
 
     if(ctx == NULL)
         return -1;    
 
     if(libxl_get_physinfo(ctx, &info) != 0)
         return -1;
-    return info.total_pages;
+    
+    vinfo = libxl_get_version_info(ctx);
+    i = (1 << 20) / vinfo->pagesize;
+    
+    return (info.total_pages / i) * 1000;
 }
 
 int RM_XL_change_vcpu(int domid, int change_vcpus)
@@ -122,7 +128,7 @@ int RM_XL_change_memory(int domid, int64_t change_kb)
         return -1;
      
     memory_online += change_kb;
-    if(memory_online >= DOMAIN_MIN_MEM && memory_online <= info.total_pages)
+    if(memory_online >= DOMAIN_MIN_MEM && memory_online <= RM_XL_get_host_mem_total())
     {
         if(libxl_set_memory_target(ctx, domid, memory_online, 0, 1))
             return -1;
