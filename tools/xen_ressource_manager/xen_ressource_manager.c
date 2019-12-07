@@ -36,7 +36,7 @@ int main_ressource_manager(void)
     printf("num_domains: %d; num_entries: %d\n", num_domains, num_entries); 
     if(num_domains <= num_entries)
     {
-        // Get the load data from all exciting domains
+        // Get ressource allocation asks from all domains
         for(i = 0; i < num_domains; i++)
         {
             if(domain_load[dom_list[i].domid].dom_id >= 0)
@@ -73,7 +73,7 @@ int main(void)
     for(i = 0; i < 1000; i++)
     {
         main_ressource_manager();
-        sleep(1);
+        sleep(60);
     }
 
     RM_RESSOURCE_MODEL_free();

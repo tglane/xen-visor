@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <rm_xenstore.h>
 
+#include <stdio.h>
+
 #define WEIGHT 0.75
 
 static domain_load_t* ressource_data;
@@ -28,11 +30,13 @@ void RM_RESSOURCE_MODEL_free(void)
 
 int RM_RESSOURCE_MODEL_get_used_cpus(void)
 {
+    printf("HOST_CPUS_USED: %d\n", host_cpus_used);
     return host_cpus_used;
 }
 
 int64_t RM_RESSOURCE_MODEL_get_used_memory(void)
 {
+    printf("HOST_MEMORY_USED: %ld\n", host_memory_used);
     return host_memory_used;
 }
 

@@ -106,8 +106,11 @@ int RM_ALLOCATOR_ressource_adjustment(libxl_dominfo* dom_list, int num_domains)
     {
         for(i = 0; i < num_domains; i++)
         {
-            if(alloc_ask[dom_list[i].domid].mem_ask != 0) 
-                RM_XL_change_memory(dom_list[i].domid, MEM_STEP * alloc_ask[dom_list[i].domid].mem_ask); 
+            if(alloc_ask[dom_list[i].domid].mem_ask != 0)
+            { 
+                printf("MEM_ASK for id: %d with %d\n", dom_list[i].domid, MEM_STEP * alloc_ask[dom_list[i].domid].mem_ask);
+                RM_XL_change_memory(dom_list[i].domid, MEM_STEP * alloc_ask[dom_list[i].domid].mem_ask);
+            }
         }
     }
     else

@@ -122,12 +122,13 @@ int RM_XL_change_memory(int domid, int64_t change_kb)
         return -1;
      
     memory_online += change_kb;
-    if(memory_online >= DOMAIN_MIN_MEM && memory_online >= info.total_pages)
+    if(memory_online >= DOMAIN_MIN_MEM && memory_online <= info.total_pages)
     {
         if(libxl_set_memory_target(ctx, domid, memory_online, 0, 1))
             return -1;
         return 0;
     }
+    printf("test\n");
     return -1;
 }
 
