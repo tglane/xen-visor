@@ -44,7 +44,7 @@ int main_ressource_manager(void)
         }
     }
 
-    RM_ALLOCATOR_ressource_adjustment(dom_list, num_domains);    
+    RM_ALLOCATOR_ressource_adjustment(dom_list, domain_load, num_domains);    
 
     printf("\n");
 
