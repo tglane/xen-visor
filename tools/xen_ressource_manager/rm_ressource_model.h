@@ -14,6 +14,10 @@ void RM_RESSOURCE_MODEL_init(void);
 
 void RM_RESSOURCE_MODEL_free(void);
 
+double RM_RESSOURCE_MODEL_get_domain_cpuload(int dom_id);
+
+double RM_RESSOURCE_MODEL_get_domain_memload(int dom_id);
+
 int RM_RESSOURCE_MODEL_get_used_cpus(void);
 
 int64_t RM_RESSOURCE_MODEL_get_used_memory(void);

@@ -41,7 +41,7 @@ int RM_ALLOCATOR_allocation_ask(domain_load_t* domain, libxl_dominfo dom_info)
     }
     
     // Ressource allocation ask for vcpus
-    if(domain->cpu_load > 80 && (dom_info.vcpu_online + 1 < RM_XL_get_host_cpu()))
+    if(domain->cpu_load > 70 && (dom_info.vcpu_online + 1 < RM_XL_get_host_cpu()))
     { 
         alloc_ask[domain->dom_id].cpu_ask = 1;
         alloc_summary.cpu_add++;
@@ -138,20 +138,24 @@ static int RM_ALLOCATOR_resolve_cpu_allocations(libxl_dominfo* dom_list, domain_
         else if(alloc_ask[dom_list[i].domid].cpu_ask > 0)
         {
             int j;
-            // TODO add domain sorted to receive_domains
-            for(j = num_add; j >= 0; j--)
+            
+            for(j = num_add; (j >= 0 && RM_RESSOURCE_MODEL_get_domain_cpuload(receive_domains[j]) < dom_load[dom_list[i].domid].cpu_load); j--)
             {
-                if(receive_domains[j] > -1 && dom_load[receive_domains[j]].cpu_load < dom_load[dom_list[i].domid].cpu_load)
-                    receive_domains[j + 1] = receive_domains[j];
+                receive_domains[j + 1] = receive_domains[j];
             }
-            receive_domains[j] = dom_list[i].domid;
+
+            receive_domains[j + 1] = dom_list[i].domid;
             num_add++;
         }
     }
 
     for(i = 0; i < free_cpus; i++)
     {
-        RM_XL_change_vcpu(receive_domains[i], alloc_ask[receive_domains[i]].cpu_ask);
+        if(receive_domains[i] > -1)
+        {
+            RM_XL_change_vcpu(receive_domains[i], alloc_ask[receive_domains[i]].cpu_ask);
+            printf("ADDED CPU TO: %d\n", receive_domains[i]);
+        }
     }
     
     free(receive_domains);
@@ -177,20 +181,24 @@ static int RM_ALLOCATOR_resolve_mem_allocations(libxl_dominfo* dom_list, domain_
         else if(alloc_ask[dom_list[i].domid].mem_ask > 0)
         {
             int j;
-            // TODO add domain sorted to receive_domains
-            for(j = num_add; j >= 0; j--)
+            
+            for(j = num_add; (j >= 0 && RM_RESSOURCE_MODEL_get_domain_memload(receive_domains[j]) < dom_load[dom_list[i].domid].mem_load); j--)
             {
-                if(receive_domains[j] > -1 && dom_load[receive_domains[j]].mem_load < dom_load[dom_list[i].domid].mem_load)
                     receive_domains[j + 1] = receive_domains[j];
             }
-            receive_domains[j] = dom_list[i].domid;
+            
+            receive_domains[j + 1] = dom_list[i].domid;
             num_add++;
         }
     }
 
     for(i = 0; i < free_mem; i++)
     {
-        RM_XL_change_memory(receive_domains[i], alloc_ask[receive_domains[i]].mem_ask);
+        if(receive_domains[i] > -1)
+        {
+            RM_XL_change_memory(receive_domains[i], alloc_ask[receive_domains[i]].mem_ask);
+            printf("ADDED MEMORY TO: %d\n", receive_domains[i]);
+        }
     }
 
     free(receive_domains);

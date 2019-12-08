@@ -28,15 +28,36 @@ void RM_RESSOURCE_MODEL_free(void)
         free(ressource_data);
 }
 
+double RM_RESSOURCE_MODEL_get_domain_cpuload(int dom_id)
+{
+    if(ressource_data == NULL)
+        return -1;
+
+    if(dom_id < 0)
+        return -1;
+
+    return ressource_data[dom_id].cpu_load;
+}
+
+double RM_RESSOURCE_MODEL_get_domain_memload(int dom_id)
+{
+    if(ressource_data == NULL)
+        return -1;
+
+    if(dom_id < 0)
+        return -1;
+
+    return ressource_data[dom_id].mem_load;
+}
+
+
 int RM_RESSOURCE_MODEL_get_used_cpus(void)
 {
-    printf("HOST_CPUS_USED: %d\n", host_cpus_used);
     return host_cpus_used;
 }
 
 int64_t RM_RESSOURCE_MODEL_get_used_memory(void)
 {
-    printf("HOST_MEMORY_USED: %ld\n", host_memory_used);
     return host_memory_used;
 }
 
