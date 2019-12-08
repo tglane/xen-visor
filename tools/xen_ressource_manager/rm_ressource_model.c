@@ -3,8 +3,6 @@
 #include <stdlib.h>
 #include <rm_xenstore.h>
 
-#include <stdio.h>
-
 #define WEIGHT 0.75
 
 static domain_load_t* ressource_data;

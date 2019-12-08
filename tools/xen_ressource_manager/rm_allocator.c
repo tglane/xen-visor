@@ -1,6 +1,7 @@
 #include <rm_allocator.h>
 
 #include <stdio.h>
+#include <syslog.h>
 #include <rm_xl.h>
 
 #define MEM_STEP 100000
@@ -31,7 +32,7 @@ int RM_ALLOCATOR_allocation_ask(domain_load_t* domain, libxl_dominfo dom_info)
 {
     int64_t domain_memory;
 
-    printf("ID: %d; CPU: %f; MEM: %f\n", domain->dom_id, domain->cpu_load, domain->mem_load);
+    syslog(LOG_NOTICE, "ID: %d; CPU: %f; MEM: %f\n", domain->dom_id, domain->cpu_load, domain->mem_load);
    
     if(domain->dom_id >= num_domains)
     {
@@ -73,7 +74,7 @@ int RM_ALLOCATOR_allocation_ask(domain_load_t* domain, libxl_dominfo dom_info)
         alloc_ask[domain->dom_id].mem_ask = 0;
     }
     
-    printf("ID: %d; CPU_ASK: %d; MEM_ASK: %d\n", domain->dom_id, alloc_ask[domain->dom_id].cpu_ask, alloc_ask[domain->dom_id].mem_ask);
+    syslog(LOG_NOTICE, "ID: %d; CPU_ASK: %d; MEM_ASK: %d\n", domain->dom_id, alloc_ask[domain->dom_id].cpu_ask, alloc_ask[domain->dom_id].mem_ask);
     
     return 0;
 }
@@ -106,7 +107,7 @@ int RM_ALLOCATOR_ressource_adjustment(libxl_dominfo* dom_list, domain_load_t* do
         {
             if(alloc_ask[dom_list[i].domid].mem_ask != 0)
             { 
-                printf("MEM_ASK for id: %d with %d\n", dom_list[i].domid, MEM_STEP * alloc_ask[dom_list[i].domid].mem_ask);
+                syslog(LOG_NOTICE, "MEM_ASK for id: %d with %d\n", dom_list[i].domid, MEM_STEP * alloc_ask[dom_list[i].domid].mem_ask);
                 RM_XL_change_memory(dom_list[i].domid, MEM_STEP * alloc_ask[dom_list[i].domid].mem_ask);
             }
         }
@@ -154,7 +155,7 @@ static int RM_ALLOCATOR_resolve_cpu_allocations(libxl_dominfo* dom_list, domain_
         if(receive_domains[i] > -1)
         {
             RM_XL_change_vcpu(receive_domains[i], alloc_ask[receive_domains[i]].cpu_ask);
-            printf("ADDED CPU TO: %d\n", receive_domains[i]);
+            syslog(LOG_NOTICE, "ADDED CPU TO: %d\n", receive_domains[i]);
         }
     }
     
@@ -197,7 +198,7 @@ static int RM_ALLOCATOR_resolve_mem_allocations(libxl_dominfo* dom_list, domain_
         if(receive_domains[i] > -1)
         {
             RM_XL_change_memory(receive_domains[i], alloc_ask[receive_domains[i]].mem_ask);
-            printf("ADDED MEMORY TO: %d\n", receive_domains[i]);
+            syslog(LOG_NOTICE, "ADDED MEMORY TO: %d\n", receive_domains[i]);
         }
     }
 

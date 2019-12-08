@@ -2,13 +2,47 @@
 #include <stdio.h>
 #include <unistd.h> // just for sleep()
 
+#include <syslog.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+
 #include <rm_xenstore.h>
 #include <rm_xl.h>
 #include <rm_ressource_model.h>
 #include <rm_allocator.h>
 
-int initHandle(void)
+int init_daemon(void)
 {
+    pid_t pid;
+
+    // Init daemon
+    pid = fork();
+    if(pid < 0)
+        exit(EXIT_FAILURE);
+    
+    if(pid > 0)
+        exit(EXIT_SUCCESS);
+    
+    umask(0);
+
+    if(setsid < 0)
+        exit(EXIT_FAILURE);
+
+    if((chdir("/")) < 0)
+        exit(EXIT_FAILURE);
+
+    close(STDIN_FILENO);
+    close(STDOUT_FILENO);
+    close(STDERR_FILENO);
+
+    openlog("xen_ressource_manager", LOG_PID | LOG_NDELAY, LOG_MAIL);
+    
+    return 0;
+}
+
+int init_handle(void)
+{
+    // Init handles
     if(RM_XL_init() < 0)
         return -1;
 
@@ -33,30 +67,24 @@ int main_ressource_manager(void)
     RM_RESSOURCE_MODEL_update(dom_list, num_domains);
     domain_load = RM_RESSOURCE_MODEL_get_ressource_data(&num_entries);
   
-    printf("num_domains: %d; num_entries: %d\n", num_domains, num_entries); 
+    //printf("num_domains: %d; num_entries: %d\n", num_domains, num_entries); 
+    syslog(LOG_NOTICE, "num_domains: %d; num_entries: %d\n", num_domains, num_entries);
     if(num_domains <= num_entries)
     {
         // Get ressource allocation asks from all domains
         for(i = 0; i < num_domains; i++)
         {
             if(domain_load[dom_list[i].domid].dom_id >= 0)
+            {
                 RM_ALLOCATOR_allocation_ask(&domain_load[dom_list[i].domid], dom_list[i]);
+                syslog(LOG_NOTICE, "MODEL_UPDATE: %d\n", dom_list[i].domid);
+            }
         }
     }
 
     RM_ALLOCATOR_ressource_adjustment(dom_list, domain_load, num_domains);    
 
-    printf("\n");
-
-    // test cpu and ram change
-    /*if(num_domains > 1)
-    {
-        if(RM_XL_change_vcpu(domid_list[1], 1) == 0)
-            printf("added vcpu to domain 1\n");
-
-        if(RM_XL_change_memory(domid_list[1], 100000) == 0)
-            printf("added memory to domain 1\n");
-    }*/
+    syslog(LOG_NOTICE, "\n");
 
     libxl_dominfo_list_free(dom_list, num_domains);
 
@@ -65,19 +93,23 @@ int main_ressource_manager(void)
 
 int main(void)
 {
-    int i; 
+    int i = 0;
 
-    if(initHandle() < 0)
-        exit(0);
+    if(init_handle() < 0 || init_daemon() < 0)
+        exit(EXIT_FAILURE);
 
-    for(i = 0; i < 1000; i++)
+    while(1)
     {
+        // TODO 
         main_ressource_manager();
+        i++;
         sleep(60);
     }
 
     RM_RESSOURCE_MODEL_free();
     RM_XENSTORE_close();
     RM_XL_close();
+
+    closelog();
 }
 
