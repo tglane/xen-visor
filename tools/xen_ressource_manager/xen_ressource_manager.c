@@ -103,7 +103,7 @@ int main(void)
         // TODO 
         main_ressource_manager();
         i++;
-        sleep(60);
+        sleep(5);
     }
 
     RM_RESSOURCE_MODEL_free();
