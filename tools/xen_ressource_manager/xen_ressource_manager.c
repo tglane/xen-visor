@@ -77,7 +77,6 @@ int main_ressource_manager(void)
             if(domain_load[dom_list[i].domid].dom_id >= 0)
             {
                 RM_ALLOCATOR_allocation_ask(&domain_load[dom_list[i].domid], dom_list[i]);
-                syslog(LOG_NOTICE, "MODEL_UPDATE: %d\n", dom_list[i].domid);
             }
         }
     }
