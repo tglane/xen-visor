@@ -16,8 +16,11 @@ void RM_RESSOURCE_MODEL_init(void)
     if(ressource_data == NULL)
     {
         ressource_data = malloc(sizeof(domain_load_t));
+        if(ressource_data == NULL)
+            return -1;
         ressource_data[0] = (domain_load_t) {-1, 0.0, 0.0};
     }
+    return 0;
 }
 
 void RM_RESSOURCE_MODEL_free(void)

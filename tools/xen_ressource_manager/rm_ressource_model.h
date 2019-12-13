@@ -10,7 +10,7 @@ struct domain_load {
 };
 typedef struct domain_load domain_load_t;
 
-void RM_RESSOURCE_MODEL_init(void);
+int RM_RESSOURCE_MODEL_init(void);
 
 void RM_RESSOURCE_MODEL_free(void);
 

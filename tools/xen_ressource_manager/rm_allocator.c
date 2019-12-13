@@ -141,6 +141,7 @@ static int RM_ALLOCATOR_resolve_cpu_allocations(libxl_dominfo* dom_list, domain_
     receive_domains = malloc(num_domains * sizeof(int));
     memset(receive_domains, -1, num_domains * sizeof(int));
 
+    // Order domains that want more CPUs by their load and remove CPUs from domains that want to reduce CPUs
     for(i = 0; i < num_domains; i++)
     {
         if(alloc_ask[dom_list[i].domid].cpu_ask < 0)
@@ -160,7 +161,8 @@ static int RM_ALLOCATOR_resolve_cpu_allocations(libxl_dominfo* dom_list, domain_
             num_add++;
         }
     }
-    syslog(LOG_NOTICE, "free_cpus: %d\n", free_cpus);
+    
+    // Give all free CPUs to domains
     for(i = 0; i < free_cpus; i++)
     {
         if(receive_domains[i] > -1)
@@ -184,6 +186,7 @@ static int RM_ALLOCATOR_resolve_mem_allocations(libxl_dominfo* dom_list, domain_
     receive_domains = malloc(num_domains * sizeof(int));
     memset(receive_domains, -1, num_domains * sizeof(int));
 
+    // Order domains that want more MEM by their load and remove MEM from domains that want to reduce MEM
     for(i = 0; i < num_domains; i++)
     {
         if(alloc_ask[dom_list[i].domid].mem_ask < 0)
@@ -204,6 +207,7 @@ static int RM_ALLOCATOR_resolve_mem_allocations(libxl_dominfo* dom_list, domain_
         }
     }
 
+    // Give all available MEM to domains that want more
     for(i = 0; i < free_mem; i++)
     {
         if(receive_domains[i] > -1)

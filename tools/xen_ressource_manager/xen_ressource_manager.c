@@ -49,7 +49,8 @@ int init_handle(void)
     if(RM_XENSTORE_init() < 0)
         return -1;
 
-    RM_RESSOURCE_MODEL_init();
+    if(RM_RESSOURCE_MODEL_init() < 0)
+        return -1;
 
     return 0;
 }
@@ -67,7 +68,6 @@ int main_ressource_manager(void)
     RM_RESSOURCE_MODEL_update(dom_list, num_domains);
     domain_load = RM_RESSOURCE_MODEL_get_ressource_data(&num_entries);
   
-    //printf("num_domains: %d; num_entries: %d\n", num_domains, num_entries); 
     syslog(LOG_NOTICE, "num_domains: %d; num_entries: %d\n", num_domains, num_entries);
     if(num_domains <= num_entries)
     {
@@ -99,7 +99,7 @@ int main(void)
 
     while(1)
     {
-        // TODO 
+        // TODO maybe check for ressource load more often than adapting the ressources?
         main_ressource_manager();
         i++;
         sleep(5);
