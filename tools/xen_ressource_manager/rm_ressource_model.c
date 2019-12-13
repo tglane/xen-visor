@@ -2,6 +2,7 @@
 
 #include <stdlib.h>
 #include <rm_xenstore.h>
+#include <rm_allocator.h>
 
 #define WEIGHT 0.75
 
@@ -124,6 +125,8 @@ int RM_RESSOURCE_MODEL_update(libxl_dominfo* dom_list, int num_domains)
             
             ressource_data[dom_list[i].domid].mem_load = ressource_data[dom_list[i].domid].mem_load + 
                 ((memload - ressource_data[dom_list[i].domid].mem_load) / ressource_data[dom_list[i].domid].iterations);*/
+        
+            RM_ALLOCATOR_allocation_ask(&ressource_data[dom_list[i].domid], dom_list[i]);
         }
     }
 
