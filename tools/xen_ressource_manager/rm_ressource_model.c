@@ -84,12 +84,11 @@ int RM_RESSOURCE_MODEL_update(libxl_dominfo* dom_list, int num_domains)
             ressource_data = realloc(ressource_data, (dom_list[i].domid + 1) * sizeof(domain_load_t));
             if(ressource_data == NULL)
                 return -1;
-
+            
             for(j = max_domain_id + 1; j < dom_list[i].domid; j++)
             {
                 ressource_data[j] = (domain_load_t) {-1, 0.0, 0.0};
             }
-
             max_domain_id = dom_list[i].domid;
         }
 
@@ -103,8 +102,8 @@ int RM_RESSOURCE_MODEL_update(libxl_dominfo* dom_list, int num_domains)
         if(memload < 0 || cpuload < 0)
         {
             ressource_data[dom_list[i].domid].dom_id = -1;
-            ressource_data[dom_list[i].domid].cpu_load = 0;
-            ressource_data[dom_list[i].domid].mem_load = 0;
+            ressource_data[dom_list[i].domid].cpu_load = 0.0;
+            ressource_data[dom_list[i].domid].mem_load = 0.0;
         }
         else
         {
@@ -125,8 +124,7 @@ int RM_RESSOURCE_MODEL_update(libxl_dominfo* dom_list, int num_domains)
             
             ressource_data[dom_list[i].domid].mem_load = ressource_data[dom_list[i].domid].mem_load + 
                 ((memload - ressource_data[dom_list[i].domid].mem_load) / ressource_data[dom_list[i].domid].iterations);*/
-        
-            RM_ALLOCATOR_allocation_ask(&ressource_data[dom_list[i].domid], dom_list[i]);
+
         }
     }
 

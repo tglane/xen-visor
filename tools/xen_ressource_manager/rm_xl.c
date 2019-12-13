@@ -10,8 +10,6 @@
 static libxl_ctx* ctx;
 static xentoollog_logger_stdiostream* logger;
 
-static int compare_libxl_dominfo(const void* a, const void* b);
-
 int RM_XL_init(void)
 {
     logger = xtl_createlogger_stdiostream(stderr, XTL_PROGRESS, 0);
@@ -52,9 +50,6 @@ libxl_dominfo* RM_XL_get_domain_list(int* num_dom_out)
     if(info == NULL)
         return NULL;
     
-    // Sort by vcpu_online
-    qsort(info, *num_dom_out, sizeof(struct libxl_dominfo), compare_libxl_dominfo);
-
     return info;
 }
 
@@ -139,13 +134,5 @@ int RM_XL_change_memory(int domid, int64_t change_kb)
         return 0;
     }
     return -1;
-}
-
-static int compare_libxl_dominfo(const void* a, const void* b)
-{
-    struct libxl_dominfo* one = (struct libxl_dominfo*) a;
-    struct libxl_dominfo* two = (struct libxl_dominfo*) b;
-
-    return (two->vcpu_online - one->vcpu_online);
 }
 

@@ -57,7 +57,7 @@ int init_handle(void)
 
 int main_ressource_manager(void)
 {
-    int num_domains, num_entries;
+    int num_domains, num_entries, i;
     libxl_dominfo* dom_list;
     domain_load_t* domain_load;
     
@@ -71,6 +71,11 @@ int main_ressource_manager(void)
     // TODO Check if used_cpus > host_cpus and adjust if necessary
 
     syslog(LOG_NOTICE, "num_domains: %d; num_entries: %d\n", num_domains, num_entries);
+    for(i = 0; i < num_domains; i++)
+    {
+        if(domain_load[dom_list[i].domid].dom_id >= 0)
+            RM_ALLOCATOR_allocation_ask(&domain_load[dom_list[i].domid], dom_list[i]);
+    }
 
     RM_ALLOCATOR_ressource_adjustment(dom_list, domain_load, num_domains);    
 
