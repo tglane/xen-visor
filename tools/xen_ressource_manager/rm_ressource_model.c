@@ -11,7 +11,7 @@ static int max_domain_id = 0;
 static unsigned int host_cpus_used = 0;
 static uint64_t host_memory_used = 0;
 
-void RM_RESSOURCE_MODEL_init(void)
+int RM_RESSOURCE_MODEL_init(void)
 {
     if(ressource_data == NULL)
     {
