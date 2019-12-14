@@ -163,22 +163,14 @@ static int RM_ALLOCATOR_resolve_cpu_allocations(libxl_dominfo* dom_list, domain_
     }
     
     // Give all free CPUs to domains
-    //for(i = 0; i < free_cpus; i++)
-    for(i = 0; (i < alloc_summary.cpu_add RESSOURCE_MODEL_get_domain_cpuload(receive_domains[i]) > 90); i++)
+    for(i = 0; i < free_cpus; i++)
     {
-        if(free_cpus > 0)
-        {
-            RM_XL_change_vcpu(receive_domains[i], 1);
-            free_cpus--;
-        }
         // TODO give more cpus to domains that asked for and with load higher than 90%
-
-
-        /*if(receive_domains[i] > -1)
+        if(receive_domains[i] > -1)
         {
             RM_XL_change_vcpu(receive_domains[i], alloc_ask[receive_domains[i]].cpu_ask);
             syslog(LOG_NOTICE, "ADDED CPU TO: %d\n", receive_domains[i]);
-        }*/
+        }
     }
     
     free(receive_domains);
