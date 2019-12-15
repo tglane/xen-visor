@@ -91,6 +91,9 @@ int RM_ALLOCATOR_ressource_adjustment(libxl_dominfo* dom_list, domain_load_t* do
     syslog(LOG_NOTICE, "alloc_summary.cpu_add: %d\n", alloc_summary.cpu_add);
     syslog(LOG_NOTICE, "alloc_summary.cpu_reduce: %d\n", alloc_summary.cpu_reduce);
 
+    if(num_domains <= 0 || (alloc_summary.cpu_add == 0 && alloc_summary.cpu_reduce == 0))
+        return -1;
+    
     // Resolve CPU allocations
     if((alloc_summary.cpu_reduce >= alloc_summary.cpu_add) || 
         (alloc_summary.cpu_add - alloc_summary.cpu_reduce <= RM_XL_get_host_cpu() - RM_RESSOURCE_MODEL_get_used_cpus()))
