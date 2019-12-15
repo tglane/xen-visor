@@ -34,7 +34,8 @@ int RM_ALLOCATOR_allocation_ask(domain_load_t* domain, libxl_dominfo dom_info)
     int64_t domain_memory;
 
     syslog(LOG_NOTICE, "ID: %d; CPU: %f; MEM: %f\n", domain->dom_id, domain->cpu_load, domain->mem_load);
-   
+    syslog(LOG_NOTICE, "ID: %d; Count CPUs: %d; Count MEM: %ld\n", dom_info.domid, dom_info.vcpu_online, dom_info.current_memkb + dom_info.outstanding_memkb);
+
     if(domain->dom_id >= num_domains)
     {
         alloc_ask = realloc(alloc_ask, (domain->dom_id + 1) * sizeof(allocation_ask_t));
@@ -43,7 +44,7 @@ int RM_ALLOCATOR_allocation_ask(domain_load_t* domain, libxl_dominfo dom_info)
     }
     
     // Ressource allocation ask for vcpus
-    if(domain->cpu_load > 70 && (dom_info.vcpu_online + 1 <= RM_XL_get_host_cpu()))
+    if(domain->cpu_load > 80 && (dom_info.vcpu_online + 1 <= RM_XL_get_host_cpu()))
     { 
         alloc_ask[domain->dom_id].cpu_ask = 1;
         alloc_summary.cpu_add++;
@@ -144,8 +145,10 @@ static int RM_ALLOCATOR_resolve_cpu_allocations(libxl_dominfo* dom_list, domain_
 
     if(free_cpus < alloc_summary.cpu_add)
     {
-        standby_domains = malloc((num_domains - (alloc_summary.cpu_add + alloc_summary.cpu_reduce)) * sizeof(int));
-        memset(standby_domains, -1, (num_domains - (alloc_summary.cpu_add + alloc_summary.cpu_reduce)) * sizeof(int));
+        standby_domains = malloc(num_domains * sizeof(int));
+        memset(standby_domains, -1, num_domains * sizeof(int));
+        //standby_domains = malloc((num_domains - (alloc_summary.cpu_add + alloc_summary.cpu_reduce)) * sizeof(int));
+        //memset(standby_domains, -1, (num_domains - (alloc_summary.cpu_add + alloc_summary.cpu_reduce)) * sizeof(int));
     }
 
     // Order domains that want more CPUs by their load and remove CPUs from domains that want to reduce CPUs
@@ -170,7 +173,8 @@ static int RM_ALLOCATOR_resolve_cpu_allocations(libxl_dominfo* dom_list, domain_
         else if(alloc_ask[dom_list[i].domid].cpu_ask == 0 && dom_list[i].vcpu_online > 1 && free_cpus < alloc_summary.cpu_add)
         {
             int j;
-            for(j = num_standby; (j >= 0 && RM_RESSOURCE_MODEL_get_domain_cpuload(standby_domains[j]) > dom_load[dom_list[i].domid].cpu_load); j--)
+
+            for(j = num_standby; (j >= 0 && (RM_RESSOURCE_MODEL_get_domain_cpuload(standby_domains[j]) > dom_load[dom_list[i].domid].cpu_load || RM_RESSOURCE_MODEL_get_domain_cpuload(standby_domains[j]) == -1)); j--)
             {
                 standby_domains[j + 1] = standby_domains[j];
             }
@@ -179,12 +183,15 @@ static int RM_ALLOCATOR_resolve_cpu_allocations(libxl_dominfo* dom_list, domain_
             num_standby++;
         }
     }
+
+    syslog(LOG_NOTICE, "###################################### standby_domains:\n");
+    for(i = 0; i < num_standby; i++)
+        syslog(LOG_NOTICE, "id: %d\n", standby_domains[i]);
+    syslog(LOG_NOTICE, "######################################\n");
     
     // Give all free CPUs to domains
     for(i = 0; i < alloc_summary.cpu_add; i++)
     {
-
-        // TODO give more cpus to domains that asked for and with load higher than 90%
         if(free_cpus > 0)
         {
             RM_XL_change_vcpu(receive_domains[i], alloc_ask[receive_domains[i]].cpu_ask);
@@ -195,16 +202,16 @@ static int RM_ALLOCATOR_resolve_cpu_allocations(libxl_dominfo* dom_list, domain_
         {
             // If more domains with higher load than 90 percent than free cpus availabe
             int j;
-            // TODO reverse order
-            for(j = standby_marker; j < num_standby; j--)
+            for(j = standby_marker; j < num_standby && standby_domains[j] >= 0; j++)
             {
                 if(RM_RESSOURCE_MODEL_get_domain_cpuload(standby_domains[j]) < 65)
                 {
                     standby_marker = j;
                     RM_XL_change_vcpu(standby_domains[j], -1);
                     RM_XL_change_vcpu(receive_domains[i], 1);
+                    syslog(LOG_NOTICE, "ADDED CPU to: %d; Using Cpu from domain: %d\n", receive_domains[i], standby_domains[j]);
+                    break;
                 }
-                break;
             }
         }
     }
@@ -218,16 +225,26 @@ static int RM_ALLOCATOR_resolve_cpu_allocations(libxl_dominfo* dom_list, domain_
 // TODO add domain priorities
 static int RM_ALLOCATOR_resolve_mem_allocations(libxl_dominfo* dom_list, domain_load_t* dom_load, int num_domains)
 {
-    int i, free_mem, num_add = 0;
+    int i, free_mem, domain_mem, num_add = 0, num_standby = 0, standby_marker = 0;
     int* receive_domains;
+    int* standby_domains;
 
     free_mem = (RM_XL_get_host_mem_total() - (RM_RESSOURCE_MODEL_get_used_memory() - alloc_summary.mem_reduce)) / MEM_STEP;
     receive_domains = malloc(num_domains * sizeof(int));
     memset(receive_domains, -1, num_domains * sizeof(int));
 
+    if(free_mem < alloc_summary.mem_add)
+    {
+        standby_domains = malloc(num_domains * sizeof(int));
+        memset(standby_domains, -1, num_domains * sizeof(int));
+    } 
+
+
     // Order domains that want more MEM by their load and remove MEM from domains that want to reduce MEM
     for(i = 0; i < num_domains; i++)
     {
+        domain_mem = dom_list[i].current_memkb + dom_list[i].outstanding_memkb;
+
         if(alloc_ask[dom_list[i].domid].mem_ask < 0)
         {
             RM_XL_change_memory(dom_list[i].domid, alloc_ask[dom_list[i].domid].mem_ask);
@@ -244,20 +261,48 @@ static int RM_ALLOCATOR_resolve_mem_allocations(libxl_dominfo* dom_list, domain_
             receive_domains[j + 1] = dom_list[i].domid;
             num_add++;
         }
+        else if(alloc_ask[dom_list[i].domid].mem_ask == 0 && domain_mem - MEM_STEP >= MIN_DOMAIN_MEM && free_mem < alloc_summary.mem_add)
+        {
+            int j;
+
+            for(j = num_standby; (j >= 0 && (RM_RESSOURCE_MODEL_get_domain_memload(standby_domains[j]) > dom_load[dom_list[i].domid].mem_load || RM_RESSOURCE_MODEL_get_domain_memload(standby_domains[j]) == -1)); j--)
+            {
+                standby_domains[j + 1] = standby_domains[j];
+            }
+
+            standby_domains[j + 1] = dom_list[i].domid;
+            num_standby++;
+        }
     }
 
     // Give all available MEM to domains that want more
-    for(i = 0; i < free_mem; i++)
+    for(i = 0; i < alloc_summary.mem_add; i++)
     {
-        // TODO
-        if(receive_domains[i] > -1)
+        if(free_mem > 0)
         {
-            RM_XL_change_memory(receive_domains[i], alloc_ask[receive_domains[i]].mem_ask);
-            syslog(LOG_NOTICE, "ADDED MEMORY TO: %d\n", receive_domains[i]);
+            RM_XL_change_memory(receive_domains[i], MEM_STEP);
+            free_mem--;
+        }
+        else if(RM_RESSOURCE_MODEL_get_domain_memload(receive_domains[i] > 90 && standby_domains != NULL))
+        {
+            int j; 
+
+            for(j = standby_marker; j > num_standby && standby_domains[j] >= 0; j++)
+            {
+                if(RM_RESSOURCE_MODEL_get_domain_memload(standby_domains[j] < 75))
+                {
+                    standby_marker = j;
+                    RM_XL_change_memory(standby_domains[j], -MEM_STEP);
+                    RM_XL_change_memory(receive_domains[i], MEM_STEP);
+                    break;
+                }
+            }
         }
     }
 
     free(receive_domains);
+    if(standby_domains != NULL)
+        free(standby_domains);
     return 0;
 }
 
