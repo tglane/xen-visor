@@ -1,0 +1,12 @@
+### move this file to /etc/systemd/system/ on systemd based linux ###
+### move this file to /etc/systemd/system/ on systemd based linux ###
+[Unit]
+Description=ressource_load
+
+[Service]
+ExecStart= /usr/bin/ressource_load/ressource_load.sh
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+
