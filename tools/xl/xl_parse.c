@@ -1351,10 +1351,25 @@ void parse_config_data(const char *config_source,
     if (!xlu_cfg_get_long (config, "memory", &l, 0))
         b_info->target_memkb = l * 1024;
 
-    if (!xlu_cfg_get_long (config, "maxmem", &l, 0))
+    if (!xlu_cfg_get_long (config, "maxmem", &l, 0)) {
+        libxl_physinfo p_info;
+        const libxl_version_info* v_info;
+        unsigned int j;
+
+        if(libxl_get_physinfo(ctx, &p_info) != 0) {
+            fprintf(stderr, "Unable to set max memory\n");
+            exit(1);
+        }
+        v_info = libxl_get_version_info(ctx);
+        j = (1 << 20) / v_info->pagesize;
+        l = p_info.total_pages / j;
+
         b_info->max_memkb = l * 1024;
+    }
 
     if (!xlu_cfg_get_long (config, "vcpus", &l, 0)) {
+        // TODO 
+        l = 1;
         vcpus = l;
         if (libxl_cpu_bitmap_alloc(ctx, &b_info->avail_vcpus, l)) {
             fprintf(stderr, "Unable to allocate cpumap\n");
@@ -1365,8 +1380,10 @@ void parse_config_data(const char *config_source,
             libxl_bitmap_set((&b_info->avail_vcpus), l);
     }
 
-    if (!xlu_cfg_get_long (config, "maxvcpus", &l, 0))
+    if (!xlu_cfg_get_long (config, "maxvcpus", &l, 0)) {
+        l = libxl_get_max_cpus(ctx);
         b_info->max_vcpus = l;
+    }
 
     if (!xlu_cfg_get_string(config, "vuart", &buf, 0)) {
         if (libxl_vuart_type_from_string(buf, &b_info->arch_arm.vuart)) {
