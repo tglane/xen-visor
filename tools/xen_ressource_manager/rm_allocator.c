@@ -88,6 +88,8 @@ int RM_ALLOCATOR_ressource_adjustment(libxl_dominfo* dom_list, domain_load_t* do
     syslog(LOG_NOTICE, "### Ressource adjustment ###\n");
     syslog(LOG_NOTICE, "Host CPUs: %d\n", RM_XL_get_host_cpu());
     syslog(LOG_NOTICE, "Used CPUs: %d\n", RM_RESSOURCE_MODEL_get_used_cpus());
+    syslog(LOG_NOTICE, "Host MEM: %ld\n", RM_XL_get_host_mem_total());
+    syslog(LOG_NOTICE, "Used MEM: %ld\n", RM_RESSOURCE_MODEL_get_used_memory());
     syslog(LOG_NOTICE, "alloc_summary.cpu_add: %d\n", alloc_summary.cpu_add);
     syslog(LOG_NOTICE, "alloc_summary.cpu_reduce: %d\n", alloc_summary.cpu_reduce);
 
@@ -187,7 +189,7 @@ static int RM_ALLOCATOR_resolve_cpu_allocations(libxl_dominfo* dom_list, domain_
         }
     }
 
-    syslog(LOG_NOTICE, "###################################### standby_domains:\n");
+    syslog(LOG_NOTICE, "###################################### cpu standby_domains:\n");
     for(i = 0; i < num_standby; i++)
         syslog(LOG_NOTICE, "id: %d\n", standby_domains[i]);
     syslog(LOG_NOTICE, "######################################\n");
@@ -277,6 +279,11 @@ static int RM_ALLOCATOR_resolve_mem_allocations(libxl_dominfo* dom_list, domain_
             num_standby++;
         }
     }
+
+    syslog(LOG_NOTICE, "###################################### mem standby_domains:\n");
+    for(i = 0; i < num_standby; i++)
+        syslog(LOG_NOTICE, "id: %d\n", standby_domains[i]);
+    syslog(LOG_NOTICE, "######################################\n");
 
     // Give all available MEM to domains that want more
     for(i = 0; i < alloc_summary.mem_add; i++)
