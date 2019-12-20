@@ -5,6 +5,9 @@
 #include <stdint.h>
 #include <libxl.h>
 
+#define MEM_STEP 100000
+#define DOMAIN_MIN_MEM 300000
+
 int RM_XL_init(void);
 
 void RM_XL_close(void);

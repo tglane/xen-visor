@@ -1,11 +1,8 @@
 #include <rm_xl.h>
 
-#include <stdlib.h>
 #include <libxl_utils.h>
 #include <libxlutil.h>
 #include <xentoollog.h>
-
-#define DOMAIN_MIN_MEM 250000
 
 static libxl_ctx* ctx;
 static xentoollog_logger_stdiostream* logger;

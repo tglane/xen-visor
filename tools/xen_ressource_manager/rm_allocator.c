@@ -4,9 +4,6 @@
 #include <syslog.h>
 #include <rm_xl.h>
 
-#define MIN_DOMAIN_MEM 300000
-#define MEM_STEP 100000
-
 static int RM_ALLOCATOR_resolve_cpu_allocations(libxl_dominfo* dom_list, domain_load_t* dom_load, int num_domains);
 
 static int RM_ALLOCATOR_resolve_mem_allocations(libxl_dominfo* dom_list, domain_load_t* dom_load, int num_domains);
@@ -66,7 +63,7 @@ int RM_ALLOCATOR_allocation_ask(domain_load_t* domain, libxl_dominfo dom_info)
         alloc_ask[domain->dom_id].mem_ask = 1;
         alloc_summary.mem_add++; 
     }
-    else if(domain->mem_load < 40 && ((domain_memory - MEM_STEP) > MIN_DOMAIN_MEM))
+    else if(domain->mem_load < 40 && ((domain_memory - MEM_STEP) > DOMAIN_MIN_MEM))
     {
         alloc_ask[domain->dom_id].mem_ask = -1;
         alloc_summary.mem_reduce++;
@@ -103,7 +100,7 @@ int RM_ALLOCATOR_ressource_adjustment(libxl_dominfo* dom_list, domain_load_t* do
     if((alloc_summary.cpu_reduce >= alloc_summary.cpu_add) || 
         (alloc_summary.cpu_add - alloc_summary.cpu_reduce <= RM_XL_get_host_cpu() - RM_RESSOURCE_MODEL_get_used_cpus()))
     {
-        // Resolve all allocation asks
+        // Resolving all allocation asks is possible
         for(i = 0; i < num_domains; i++)
         {
             if(alloc_ask[dom_list[i].domid].cpu_ask != 0)
@@ -122,6 +119,7 @@ int RM_ALLOCATOR_ressource_adjustment(libxl_dominfo* dom_list, domain_load_t* do
     if((alloc_summary.mem_reduce >= alloc_summary.mem_add) || 
         (alloc_summary.mem_add - alloc_summary.mem_reduce <= RM_XL_get_host_mem_total() - RM_RESSOURCE_MODEL_get_used_memory()))
     {
+        // Resolving all allocation asks is possible
         for(i = 0; i < num_domains; i++)
         {
             if(alloc_ask[dom_list[i].domid].mem_ask != 0)
@@ -155,8 +153,6 @@ static int RM_ALLOCATOR_resolve_cpu_allocations(libxl_dominfo* dom_list, domain_
     {
         standby_domains = malloc(num_domains * sizeof(int));
         memset(standby_domains, -1, num_domains * sizeof(int));
-        //standby_domains = malloc((num_domains - (alloc_summary.cpu_add + alloc_summary.cpu_reduce)) * sizeof(int));
-        //memset(standby_domains, -1, (num_domains - (alloc_summary.cpu_add + alloc_summary.cpu_reduce)) * sizeof(int));
     }
 
     // Order domains that want more CPUs by their load and remove CPUs from domains that want to reduce CPUs
@@ -247,7 +243,6 @@ static int RM_ALLOCATOR_resolve_mem_allocations(libxl_dominfo* dom_list, domain_
         memset(standby_domains, -1, num_domains * sizeof(int));
     } 
 
-
     // Order domains that want more MEM by their load and remove MEM from domains that want to reduce MEM
     for(i = 0; i < num_domains; i++)
     {
@@ -269,7 +264,7 @@ static int RM_ALLOCATOR_resolve_mem_allocations(libxl_dominfo* dom_list, domain_
             receive_domains[j + 1] = dom_list[i].domid;
             num_add++;
         }
-        else if(alloc_ask[dom_list[i].domid].mem_ask == 0 && domain_mem - MEM_STEP >= MIN_DOMAIN_MEM && free_mem < alloc_summary.mem_add)
+        else if(alloc_ask[dom_list[i].domid].mem_ask == 0 && domain_mem - MEM_STEP >= DOMAIN_MIN_MEM && free_mem < alloc_summary.mem_add)
         {
             int j;
 
