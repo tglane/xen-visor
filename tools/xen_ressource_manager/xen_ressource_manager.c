@@ -18,7 +18,6 @@ int compare_domains_by_cpuload(const void* a, const void* b)
     double first_load = RM_RESSOURCE_MODEL_get_domain_cpuload(first->domid);
     double sec_load = RM_RESSOURCE_MODEL_get_domain_cpuload(sec->domid);
  
-    // TODO use vcpu_online as parameter to decide
     if(first->vcpu_online == 1) return 1;
     else if(sec->vcpu_online == 1) return -1; 
     else return first_load - sec_load;
@@ -33,7 +32,6 @@ int compare_domains_by_memload(const void* a, const void* b)
     int64_t first_mem = first->current_memkb + first->outstanding_memkb;
     int64_t sec_mem = sec->current_memkb + sec->outstanding_memkb;
 
-    // TODO use domain_mem_count as parameter to decide
     if(first_mem - MEM_STEP < DOMAIN_MIN_MEM) return 1;
     else if(sec_mem - MEM_STEP < DOMAIN_MIN_MEM) return -1;
     else return sec_load - first_load;
@@ -100,7 +98,7 @@ int main_ressource_manager(void)
     RM_RESSOURCE_MODEL_update(dom_list, num_domains);
     domain_load = RM_RESSOURCE_MODEL_get_ressource_data(&num_entries);
  
-    // Check if used_cpus > host_cpus and adjust if necessary
+    // Check if used_cpus > host_cpus and adjust if necessary and possible
     if(RM_RESSOURCE_MODEL_get_used_cpus() > RM_XL_get_host_cpu())
     {
         int oversize = RM_RESSOURCE_MODEL_get_used_cpus() - RM_XL_get_host_cpu();
@@ -116,7 +114,7 @@ int main_ressource_manager(void)
             RM_XL_change_vcpu(s_dom_list[i].domid, -1);
         }
     }
-    // Check if used_mem > host_mem and adjust if necessary
+    // Check if used_mem > host_mem and adjust if necessary and possible
     if(RM_RESSOURCE_MODEL_get_used_memory() > RM_XL_get_host_mem_total())
     {
         int64_t used = RM_RESSOURCE_MODEL_get_used_memory(), total = RM_XL_get_host_mem_total();

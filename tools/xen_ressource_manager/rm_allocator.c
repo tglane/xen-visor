@@ -1,6 +1,6 @@
 #include <rm_allocator.h>
 
-#include <stdio.h>
+//#include <stdio.h>
 #include <syslog.h>
 #include <rm_xl.h>
 
