@@ -76,6 +76,27 @@ int64_t RM_XL_get_host_mem_total(void)
     return (info.total_pages / i) * 1024;
 }
 
+libxl_numainfo* RM_XL_get_numa_topology(int* num_out)
+{
+    libxl_numainfo* info;
+
+    if(ctx == NULL)
+        return NULL;
+
+    info = libxl_get_numainfo(ctx, num_out);
+    return info;
+}
+
+libxl_cputopology* RM_XL_get_cpu_topology(int* num_out)
+{
+    libxl_cputopology* top;
+    if(ctx == NULL)
+        return NULL;
+
+    top = libxl_get_cpu_topology(ctx, num_out);
+    return top;
+}
+
 int RM_XL_change_vcpu(int domid, int change_vcpus)
 {
     libxl_dominfo domain_info;

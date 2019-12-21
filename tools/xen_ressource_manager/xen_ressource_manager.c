@@ -10,6 +10,7 @@
 #include <rm_xl.h>
 #include <rm_ressource_model.h>
 #include <rm_allocator.h>
+#include <rm_numa_manager.h>
 
 int compare_domains_by_cpuload(const void* a, const void* b)
 {
@@ -136,6 +137,7 @@ int main_ressource_manager(void)
     }
 
     syslog(LOG_NOTICE, "num_domains: %d; num_entries: %d\n", num_domains, num_entries);
+    // Allocation asks and adjustments
     if(num_domains <= num_entries)
     {
         for(i = 0; i < num_domains; i++)
@@ -145,6 +147,8 @@ int main_ressource_manager(void)
         }
 
         RM_ALLOCATOR_ressource_adjustment(dom_list, domain_load, num_domains);    
+        
+        RM_NUMA_MANAGER_update_vcpu_placing(dom_list, num_domains);
     }
 
     syslog(LOG_NOTICE, "\n");
