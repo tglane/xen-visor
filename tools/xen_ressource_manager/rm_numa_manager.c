@@ -1,5 +1,7 @@
 #include <rm_numa_manager.h>
 
+#include <syslog.h>
+
 static int compare_domains_by_vcpucount(const void* a, const void* b)
 {
     libxl_dominfo* first = (libxl_dominfo*) a;
@@ -16,7 +18,7 @@ int RM_NUMA_MANAGER_update_vcpu_placing(libxl_dominfo* dom_list, libxl_dominfo* 
     if(cpu_top == NULL)
         return -1;
     
-    qsort(s_dom_list, num_domains, sizeof(libxl_dominfo), compare_domains_by_vcpucount);
+    //qsort(s_dom_list, num_domains, sizeof(libxl_dominfo), compare_domains_by_vcpucount);
 
     // TODO get current cpu topology and put domains vCPUs clever on pCPUs
     for(i = 0; i < num_domains; i++)
@@ -33,12 +35,17 @@ int RM_NUMA_MANAGER_update_vcpu_placing(libxl_dominfo* dom_list, libxl_dominfo* 
 
         for(j = 0; j < num_vcpus; j++)
         {
-
-            RM_XL_pin_vcpu(s_dom_list[i].domid, vcpu_info[j].vcpuid, i+j, VCPU_PIN_HARD);
+            if(vcpu_info[j].online)
+            {
+                RM_XL_pin_vcpu(s_dom_list[i].domid, vcpu_info[j].vcpuid, i+j, VCPU_PIN_HARD);
+                syslog(LOG_NOTICE, "PINNED! Domid: %d; vCPUid: %d; pCPUNr: %d\n", s_dom_list[i].domid, vcpu_info[j].vcpuid, i+j);
+            }
         }
 
         libxl_vcpuinfo_list_free(vcpu_info, num_vcpus);
     }
+
+    qsort(s_dom_list, num_domains, sizeof(libxl_dominfo), compare_domains_by_vcpucount);
 
     libxl_cputopology_list_free(cpu_top, num_cpu);
     return 0;
