@@ -90,12 +90,16 @@ int main_ressource_manager(void)
 {
     int num_domains, num_entries, i;
     libxl_dominfo* dom_list;
+    libxl_dominfo* s_dom_list;
     domain_load_t* domain_load;
     
     dom_list = RM_XL_get_domain_list(&num_domains);
     if(dom_list == NULL)
         return -1;
     
+    s_dom_list = malloc(num_domains * sizeof(libxl_dominfo));
+    memcpy(s_dom_list, dom_list, num_domains * sizeof(libxl_dominfo));
+
     RM_RESSOURCE_MODEL_update(dom_list, num_domains);
     domain_load = RM_RESSOURCE_MODEL_get_ressource_data(&num_entries);
  
@@ -103,10 +107,6 @@ int main_ressource_manager(void)
     if(RM_RESSOURCE_MODEL_get_used_cpus() > RM_XL_get_host_cpu())
     {
         int oversize = RM_RESSOURCE_MODEL_get_used_cpus() - RM_XL_get_host_cpu();
-        libxl_dominfo* s_dom_list; 
-
-        s_dom_list = malloc(num_domains * sizeof(libxl_dominfo));
-        memcpy(s_dom_list, dom_list, num_domains * sizeof(libxl_dominfo));
 
         qsort(s_dom_list, num_domains, sizeof(libxl_dominfo), compare_domains_by_cpuload);
 
@@ -121,12 +121,8 @@ int main_ressource_manager(void)
         int64_t used = RM_RESSOURCE_MODEL_get_used_memory(), total = RM_XL_get_host_mem_total();
         int rest = (used - total) % MEM_STEP;
         int oversize = (used - total) / MEM_STEP;
-        libxl_dominfo* s_dom_list;
         
         if(rest > 0) oversize++;
-
-        s_dom_list = malloc(num_domains * sizeof(libxl_dominfo));
-        memcpy(s_dom_list, dom_list, num_domains * sizeof(libxl_dominfo));
 
         qsort(s_dom_list, num_domains, sizeof(libxl_dominfo), compare_domains_by_memload);
 
@@ -148,7 +144,7 @@ int main_ressource_manager(void)
 
         RM_ALLOCATOR_ressource_adjustment(dom_list, domain_load, num_domains);    
         
-        RM_NUMA_MANAGER_update_vcpu_placing(dom_list, num_domains);
+        RM_NUMA_MANAGER_update_vcpu_placing(dom_list, s_dom_list, num_domains);
     }
 
     syslog(LOG_NOTICE, "\n");

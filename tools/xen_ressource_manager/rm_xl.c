@@ -50,6 +50,19 @@ libxl_dominfo* RM_XL_get_domain_list(int* num_dom_out)
     return info;
 }
 
+libxl_vcpuinfo* RM_XL_get_vcpu_list(int domid, int* num_vcpu_out)
+{
+    int num_cpus;
+    libxl_vcpuinfo* info;
+
+    if(ctx == NULL)
+        return NULL;
+    
+    num_cpus = libxl_get_online_cpus(ctx);
+    info = libxl_list_vcpu(ctx, domid, num_vcpu_out, &num_cpus); 
+    return info;
+}
+
 int RM_XL_get_host_cpu(void)
 {
     if(ctx == NULL)
@@ -95,6 +108,37 @@ libxl_cputopology* RM_XL_get_cpu_topology(int* num_out)
 
     top = libxl_get_cpu_topology(ctx, num_out);
     return top;
+}
+
+int RM_XL_pin_vcpu(int dom_id, int vcpu_id, int pcpu_id, int pin_type)
+{
+    // TODO 
+    libxl_bitmap hard_affinity;
+    libxl_bitmap soft_affinity;
+
+    if(ctx == NULL || dom_id < 0 || vcpu_id < 0 || pcpu_id < 0)
+        return -1;
+
+    if(libxl_cpu_bitmap_alloc(ctx, &hard_affinity, 0) || libxl_cpu_bitmap_alloc(ctx, &soft_affinity, 0))
+    {
+        libxl_bitmap_dispose(&hard_affinity);
+        libxl_bitmap_dispose(&soft_affinity);
+        return -1;
+    }
+
+    if(pin_type == VCPU_PIN_HARD)
+        libxl_bitmap_set(&hard_affinity, pcpu_id);
+    else if(pin_type == VCPU_PIN_SOFT)
+        libxl_bitmap_set(&soft_affinity, pcpu_id);
+    else
+        return -1;
+
+    if(libxl_set_vcpuaffinity_force(ctx, dom_id, vcpu_id, &hard_affinity, &soft_affinity))
+        return -1;
+
+    libxl_bitmap_dispose(&hard_affinity);
+    libxl_bitmap_dispose(&soft_affinity);
+    return 0;
 }
 
 int RM_XL_change_vcpu(int domid, int change_vcpus)
