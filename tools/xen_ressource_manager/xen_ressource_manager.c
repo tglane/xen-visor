@@ -83,7 +83,23 @@ int init_handle(void)
     if(RM_RESSOURCE_MODEL_init() < 0)
         return -1;
 
+    if(RM_NUMA_MANAGER_init_numa_info() < 0)
+        return -1;
+
     return 0;
+}
+
+/**
+ * Close handles of all xen toolstack related contexts and the log
+ */
+void close_handle(void)
+{
+    RM_NUMA_MANAGER_close();
+    RM_RESSOURCE_MODEL_free();
+    RM_XENSTORE_close();
+    RM_XL_close();
+
+    closelog();
 }
 
 int main_ressource_manager(void)
@@ -156,23 +172,19 @@ int main_ressource_manager(void)
 
 int main(void)
 {
-    int i = 0;
-
     if(init_handle() < 0 || init_daemon() < 0)
+    {
+        close_handle();
         exit(EXIT_FAILURE);
+    }
 
     while(1)
     {
         // TODO maybe check for ressource load more often than adapting the ressources?
         main_ressource_manager();
-        i++;
         sleep(5);
     }
 
-    RM_RESSOURCE_MODEL_free();
-    RM_XENSTORE_close();
-    RM_XL_close();
-
-    closelog();
+    close_handle();
 }
 

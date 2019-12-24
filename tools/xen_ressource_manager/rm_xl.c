@@ -89,6 +89,18 @@ int64_t RM_XL_get_host_mem_total(void)
     return (info.total_pages / i) * 1024;
 }
 
+libxl_physinfo* RM_XL_get_physinfo(void)
+{
+    libxl_physinfo* info;
+
+    if(ctx == NULL)
+        return NULL;
+
+    info = malloc(sizeof(libxl_physinfo));
+    libxl_get_physinfo(ctx, info);
+    return info;
+}
+
 libxl_numainfo* RM_XL_get_numa_topology(int* num_out)
 {
     libxl_numainfo* info;
@@ -112,7 +124,6 @@ libxl_cputopology* RM_XL_get_cpu_topology(int* num_out)
 
 int RM_XL_pin_vcpu(int dom_id, int vcpu_id, int pcpu_id, int pin_type)
 {
-    // TODO 
     libxl_bitmap hard_affinity;
     libxl_bitmap soft_affinity;
 
