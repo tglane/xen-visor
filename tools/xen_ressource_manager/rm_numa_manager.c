@@ -6,6 +6,8 @@ struct numa_node_info {
     int num_cpus;
     int num_free_cpus;
     int* free_cpu_id;
+    int64_t size_mem;
+    int64_t size_free_mem;
 };
 typedef struct numa_node_info numa_node_info_t;
 
@@ -66,13 +68,16 @@ int RM_NUMA_MANAGER_update_vcpu_placing(libxl_dominfo* dom_list, libxl_dominfo* 
     if(node_info == NULL)
         return -1;
 
-    // Init node_info struct array
+    // Init node_info struct array with free CPUs and memory
     for(i = 0; i < num_nodes; i++)
     {
         // TODO init node_info[i].free_cpus
         node_info[i].num_free_cpus = node_info[i].num_cpus;
         node_info[i].free_cpu_id = malloc(node_info[i].num_free_cpus * sizeof(int));
         memset(node_info[i].free_cpu_id, 1, node_info[i].num_free_cpus * sizeof(int));
+
+        node_info[i].size_mem = numa_info[i].size;
+        node_info[i].size_free_mem = numa_info[i].size;
     }
 
     /**
@@ -85,6 +90,9 @@ int RM_NUMA_MANAGER_update_vcpu_placing(libxl_dominfo* dom_list, libxl_dominfo* 
      *
      * Node-id of Core : cpu_top[i].node
      * Socket-id of Core : cpu_top[i].socket
+     * 
+     * Memory size of Node : numa_info[i].size
+     * Memory free of Node : numa_info[i].free (not usefuf; store own calculated value in node_info_t)
      *
      * # Domains : num_domains
      *
@@ -103,18 +111,27 @@ int RM_NUMA_MANAGER_update_vcpu_placing(libxl_dominfo* dom_list, libxl_dominfo* 
     // Place domains vCPUs on physical CPUs using a greedy approach
     for(i = 0; i < num_domains; i++)
     {
+        int vcpus_placed = 0;
+        int64_t mem_placed = 0, domain_memory = s_dom_list[i].current_memkb + s_dom_list[i].outstanding_memkb;
+        
         // Sort nodes by free cpus and than put domain in first fitting node
         qsort(node_info, num_nodes, sizeof(numa_node_info_t), compare_nodes_by_freecpus);
 
-        for(j = 0; j < num_nodes; j++) 
+        for(j = 0; j < num_nodes && vcpus_placed < s_dom_list[i].vcpu_online && mem_placed < domain_memory; j++) 
         {
-            if(node_info[j].num_free_cpus >= s_dom_list[i].vcpu_online)
+            // Only if all vCPUs and complete domain memory fits in one node, place all vCPUs on the node
+            // Else split the domain and place at least one cpu with the rest of the memory on another node
+            if(node_info[j].num_free_cpus >= s_dom_list[i].vcpu_online && node_info[j].size_free_mem >= domain_memory)
             {
                 // TODO place all domains vcpus on the nodes cpus
+                
+                vcpus_placed = s_dom_list[i].vcpu_online;
+                mem_placed = domain_memory;
             }
             else 
             {
                 // TODO place as much vcpus on the nodes cpus as possible and go to the next node ...
+                // TODO respect memory size when placing
             }
         }
     }
