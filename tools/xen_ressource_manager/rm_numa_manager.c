@@ -158,8 +158,11 @@ int RM_NUMA_MANAGER_update_vcpu_placing(libxl_dominfo* dom_list, libxl_dominfo* 
                 {
                     if(vcpu_info[k].online)
                     {
-                        if(RM_XL_pin_vcpu(s_dom_list[i].domid, vcpu_info[k].vcpuid, get_free_pcpu(j), VCPU_PIN_HARD))
+                        int pcpu = get_free_pcpu(j);
+                        if(RM_XL_pin_vcpu(s_dom_list[i].domid, vcpu_info[k].vcpuid, pcpu, VCPU_PIN_HARD))
                             return -1;
+
+                        syslog(LOG_NOTICE, "[NUMA - Placement 1] Domain: %d; vCPU: %d; pCPU: %d\n", s_dom_list[i].domid, vcpu_info[k].vcpuid, pcpu);
                         node_info[j].num_free_cpus--;
                         vcpus_placed++;
                     }
@@ -177,8 +180,11 @@ int RM_NUMA_MANAGER_update_vcpu_placing(libxl_dominfo* dom_list, libxl_dominfo* 
                 {
                     if(vcpu_info[k].online)
                     {
-                        if(RM_XL_pin_vcpu(s_dom_list[i].domid, vcpu_info[k].vcpuid, get_free_pcpu(j), VCPU_PIN_HARD))
+                        int pcpu = get_free_pcpu(j);
+                        if(RM_XL_pin_vcpu(s_dom_list[i].domid, vcpu_info[k].vcpuid, pcpu, VCPU_PIN_HARD))
                             return -1;
+
+                        syslog(LOG_NOTICE, "[NUMA - Placement 2] Domain: %d; vCPU: %d; pCPU: %d\n", s_dom_list[i].domid, vcpu_info[k].vcpuid, pcpu);
                         node_info[j].num_free_cpus--;
                         vcpus_placed++;
 
@@ -198,8 +204,11 @@ int RM_NUMA_MANAGER_update_vcpu_placing(libxl_dominfo* dom_list, libxl_dominfo* 
                 {
                     if(vcpu_info[k].online)
                     {
-                        if(RM_XL_pin_vcpu(s_dom_list[i].domid, vcpu_info[k].vcpuid, get_free_pcpu(j), VCPU_PIN_HARD))
+                        int pcpu = get_free_pcpu(j);
+                        if(RM_XL_pin_vcpu(s_dom_list[i].domid, vcpu_info[k].vcpuid, pcpu, VCPU_PIN_HARD))
                             return -1;
+
+                        syslog(LOG_NOTICE, "[NUMA - Placement 3] Domain: %d; vCPU: %d; pCPU: %d\n", s_dom_list[i].domid, vcpu_info[k].vcpuid, pcpu);
                         node_info[j].num_free_cpus--;
                         vcpus_placed++;
 
