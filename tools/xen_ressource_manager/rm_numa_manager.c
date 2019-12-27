@@ -41,8 +41,8 @@ static int get_free_pcpu(int node_id)
     // TODO
 
     free_cpus = node_info[node_id].free_cpu_id;
-    for(i = 0; i < node_info[node_id].total_cpus; i++)
-        syslog(LOG_NOTICE, "[DEBUG get_free_pcpu] free_cpus[%d] = %d\n", i, free_cpus[i]);
+    //for(i = 0; i < node_info[node_id].total_cpus; i++)
+        //syslog(LOG_NOTICE, "[DEBUG get_free_pcpu] free_cpus[%d] = %d\n", i, free_cpus[i]);
 
     for(i = 0; i < node_info[node_id].total_cpus; i++)
     {
@@ -166,10 +166,10 @@ int RM_NUMA_MANAGER_update_vcpu_placing(libxl_dominfo* dom_list, libxl_dominfo* 
         // Sort nodes by free cpus so the node with most free cpus comes first
         qsort(node_info, num_nodes, sizeof(numa_node_info_t), compare_nodes_by_freecpus);
 
-        for(j = 0; j < num_nodes; j++)
-        {
-            syslog(LOG_NOTICE, "[DEBUG] Sorted nodes[%d].free_cpus = %d\n", j, node_info[j].num_free_cpus);
-        }
+        //for(j = 0; j < num_nodes; j++)
+        //{
+            //syslog(LOG_NOTICE, "[DEBUG] Sorted nodes[%d].free_cpus = %d\n", j, node_info[j].num_free_cpus);
+        //}
 
         for(j = 0; j < num_nodes && vcpus_placed < s_dom_list[i].vcpu_online && mem_placed < domain_memory; j++) 
         {
@@ -191,6 +191,11 @@ int RM_NUMA_MANAGER_update_vcpu_placing(libxl_dominfo* dom_list, libxl_dominfo* 
                         syslog(LOG_NOTICE, "[NUMA - Placement 1] Domain: %d; vCPU: %d; pCPU: %d\n", s_dom_list[i].domid, vcpu_info[k].vcpuid, pcpu);
                         node_info[j].num_free_cpus--;
                         vcpus_placed++;
+                    }
+                    else
+                    {
+                        RM_XL_pin_vcpu(s_dom_list[i].domid, vcpu_info[k].vcpuid, -1, VCPU_UNPIN);
+                        syslog(LOG_NOTICE, "[NUMA - Unpin 1] Domain: %d, vCPU: %d\n", s_dom_list[i].domid, vcpu_info[k].vcpuid);
                     }
                 }
 
@@ -216,6 +221,11 @@ int RM_NUMA_MANAGER_update_vcpu_placing(libxl_dominfo* dom_list, libxl_dominfo* 
 
                         l++;
                     }
+                    else
+                    {
+                        RM_XL_pin_vcpu(s_dom_list[i].domid, vcpu_info[k].vcpuid, -1, VCPU_UNPIN);
+                        syslog(LOG_NOTICE, "[NUMA - Unpin 2] Domain: %d; vCPU: %d\n", s_dom_list[i].domid, vcpu_info[k].vcpuid);
+                    }
                 }
 
                 mem_placed = node_info[j].size_free_mem;
@@ -239,6 +249,11 @@ int RM_NUMA_MANAGER_update_vcpu_placing(libxl_dominfo* dom_list, libxl_dominfo* 
                         vcpus_placed++;
 
                         l++;
+                    }
+                    else
+                    {
+                        RM_XL_pin_vcpu(s_dom_list[i].domid, vcpu_info[k].vcpuid, -1, VCPU_UNPIN);
+                        syslog(LOG_NOTICE, "[NUMA - Unpin 3] Domain: %d; vCPU: %d\n", s_dom_list[i].domid, vcpu_info[k].vcpuid);
                     }
                 }
 

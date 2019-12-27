@@ -124,10 +124,9 @@ libxl_cputopology* RM_XL_get_cpu_topology(int* num_out)
 
 int RM_XL_pin_vcpu(int dom_id, int vcpu_id, int pcpu_id, int pin_type)
 {
-    libxl_bitmap hard_affinity;
-    libxl_bitmap soft_affinity;
+    libxl_bitmap hard_affinity, soft_affinity;
 
-    if(ctx == NULL || dom_id < 0 || vcpu_id < 0 || pcpu_id < 0)
+    if(ctx == NULL || dom_id < 0 || vcpu_id < 0 || (pcpu_id < 0 && pin_type != VCPU_UNPIN))
         return -1;
 
     if(libxl_cpu_bitmap_alloc(ctx, &hard_affinity, 0) || libxl_cpu_bitmap_alloc(ctx, &soft_affinity, 0))
@@ -138,9 +137,18 @@ int RM_XL_pin_vcpu(int dom_id, int vcpu_id, int pcpu_id, int pin_type)
     }
 
     if(pin_type == VCPU_PIN_HARD)
+    {
         libxl_bitmap_set(&hard_affinity, pcpu_id);
+    }
     else if(pin_type == VCPU_PIN_SOFT)
+    {
         libxl_bitmap_set(&soft_affinity, pcpu_id);
+    }
+    else if(pin_type == VCPU_UNPIN)
+    {
+        libxl_bitmap_set_any(&hard_affinity);
+        libxl_bitmap_set_any(&soft_affinity);
+    }
     else
         return -1;
 

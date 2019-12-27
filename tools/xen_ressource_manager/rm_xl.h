@@ -12,6 +12,7 @@
 /* Define vCPU pin types */
 #define VCPU_PIN_HARD 1
 #define VCPU_PIN_SOFT 0
+#define VCPU_UNPIN 3
 
 int RM_XL_init(void);
 
