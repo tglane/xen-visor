@@ -57,7 +57,7 @@ int RM_ALLOCATOR_allocation_ask(domain_load_t* domain, libxl_dominfo dom_info)
 
     // Ressource allocation ask for memory
     domain_memory = dom_info.current_memkb + dom_info.outstanding_memkb;
-    if(domain->mem_load > 90 && ((domain_memory + MEM_STEP) <= RM_XL_get_host_mem_total()))
+    if(domain->mem_load > 80 && ((domain_memory + MEM_STEP) <= RM_XL_get_host_mem_total()))
     {
         alloc_ask[domain->dom_id].mem_ask = 1;
         alloc_summary.mem_add++; 
@@ -96,8 +96,9 @@ int RM_ALLOCATOR_ressource_adjustment(libxl_dominfo* dom_list, domain_load_t* do
         return -1;
     
     // Resolve CPU allocations
-    if((alloc_summary.cpu_reduce >= alloc_summary.cpu_add) || 
-        (alloc_summary.cpu_add - alloc_summary.cpu_reduce <= RM_XL_get_host_cpu() - RM_RESSOURCE_MODEL_get_used_cpus()))
+    if((alloc_summary.cpu_add > 0 || alloc_summary.cpu_reduce > 0) &&
+        ((alloc_summary.cpu_reduce >= alloc_summary.cpu_add) || 
+        (alloc_summary.cpu_add - alloc_summary.cpu_reduce <= RM_XL_get_host_cpu() - RM_RESSOURCE_MODEL_get_used_cpus())))
     {
         // Resolving all allocation asks is possible
         for(i = 0; i < num_domains; i++)
@@ -109,14 +110,15 @@ int RM_ALLOCATOR_ressource_adjustment(libxl_dominfo* dom_list, domain_load_t* do
             }
         }
     }
-    else
+    else if(alloc_summary.cpu_add > 0 || alloc_summary.cpu_reduce > 0)
     {
         RM_ALLOCATOR_resolve_cpu_allocations(dom_list, dom_load, num_domains);
     }
 
     // Resolve MEM allocation
-    if((alloc_summary.mem_reduce >= alloc_summary.mem_add) || 
-        (alloc_summary.mem_add - alloc_summary.mem_reduce <= RM_XL_get_host_mem_total() - RM_RESSOURCE_MODEL_get_used_memory()))
+    if((alloc_summary.mem_add > 0 || alloc_summary.mem_reduce > 0) &&
+        ((alloc_summary.mem_reduce >= alloc_summary.mem_add) || 
+        ((alloc_summary.mem_add - alloc_summary.mem_reduce) * MEM_STEP <= RM_XL_get_host_mem_total() - RM_RESSOURCE_MODEL_get_used_memory())))
     {
         // Resolving all allocation asks is possible
         for(i = 0; i < num_domains; i++)
@@ -128,7 +130,7 @@ int RM_ALLOCATOR_ressource_adjustment(libxl_dominfo* dom_list, domain_load_t* do
             }
         }
     }
-    else
+    else if(alloc_summary.mem_add > 0 || alloc_summary.mem_reduce > 0)
     {
         RM_ALLOCATOR_resolve_mem_allocations(dom_list, dom_load, num_domains);
     }
@@ -207,7 +209,7 @@ static int RM_ALLOCATOR_resolve_cpu_allocations(libxl_dominfo* dom_list, domain_
             int j;
             for(j = standby_marker; j < num_standby && standby_domains[j] >= 0; j++)
             {
-                if(RM_RESSOURCE_MODEL_get_domain_cpuload(standby_domains[j]) < 65)
+                if(RM_RESSOURCE_MODEL_get_domain_cpuload(standby_domains[j]) < 50)
                 {
                     standby_marker = j;
                     RM_XL_change_vcpu(standby_domains[j], -1);
@@ -266,7 +268,7 @@ static int RM_ALLOCATOR_resolve_mem_allocations(libxl_dominfo* dom_list, domain_
         else if(alloc_ask[dom_list[i].domid].mem_ask == 0 && domain_mem - MEM_STEP >= DOMAIN_MIN_MEM && free_mem < alloc_summary.mem_add)
         {
             int j;
-
+            
             for(j = num_standby; (j >= 0 && (RM_RESSOURCE_MODEL_get_domain_memload(standby_domains[j]) > dom_load[dom_list[i].domid].mem_load || RM_RESSOURCE_MODEL_get_domain_memload(standby_domains[j]) == -1)); j--)
             {
                 standby_domains[j + 1] = standby_domains[j];
@@ -289,18 +291,24 @@ static int RM_ALLOCATOR_resolve_mem_allocations(libxl_dominfo* dom_list, domain_
         {
             RM_XL_change_memory(receive_domains[i], MEM_STEP);
             free_mem--;
+            syslog(LOG_NOTICE, "ADDED MEM TO: %d; Using free mem\n", receive_domains[i]);
         }
         else if(RM_RESSOURCE_MODEL_get_domain_memload(receive_domains[i] > 90 && standby_domains != NULL))
         {
             int j; 
 
-            for(j = standby_marker; j > num_standby && standby_domains[j] >= 0; j++)
+            for(j = standby_marker; j < num_standby && standby_domains[j] >= 0; j++)
             {
-                if(RM_RESSOURCE_MODEL_get_domain_memload(standby_domains[j] < 75))
+                if(RM_RESSOURCE_MODEL_get_domain_memload(standby_domains[j]) < 75)
                 {
                     standby_marker = j;
-                    RM_XL_change_memory(standby_domains[j], -MEM_STEP);
-                    RM_XL_change_memory(receive_domains[i], MEM_STEP);
+                    syslog(LOG_NOTICE, "pre-Test\n");
+                    if(RM_XL_change_memory(standby_domains[j], -MEM_STEP) == 0)
+                    {
+                        syslog(LOG_NOTICE, "Test \n");
+                        if(RM_XL_change_memory(receive_domains[i], MEM_STEP) == 0)
+                            syslog(LOG_NOTICE, "ADDED MEM to: %d; Using mem from domain: %d\n", receive_domains[i], standby_domains[j]);
+                    }
                     break;
                 }
             }
