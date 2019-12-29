@@ -302,10 +302,8 @@ static int RM_ALLOCATOR_resolve_mem_allocations(libxl_dominfo* dom_list, domain_
                 if(RM_RESSOURCE_MODEL_get_domain_memload(standby_domains[j]) < 75)
                 {
                     standby_marker = j;
-                    syslog(LOG_NOTICE, "pre-Test\n");
                     if(RM_XL_change_memory(standby_domains[j], -MEM_STEP) == 0)
                     {
-                        syslog(LOG_NOTICE, "Test \n");
                         if(RM_XL_change_memory(receive_domains[i], MEM_STEP) == 0)
                             syslog(LOG_NOTICE, "ADDED MEM to: %d; Using mem from domain: %d\n", receive_domains[i], standby_domains[j]);
                     }
