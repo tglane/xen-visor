@@ -7,12 +7,18 @@ static int RM_ALLOCATOR_resolve_cpu_allocations(libxl_dominfo* dom_list, domain_
 
 static int RM_ALLOCATOR_resolve_mem_allocations(libxl_dominfo* dom_list, domain_load_t* dom_load, int num_domains);
 
+/**
+ * Struct containing memory and cpu asks of one domain
+ */
 struct allocation_ask {
     int cpu_ask;
     int mem_ask;
 };
 typedef struct allocation_ask allocation_ask_t;
 
+/**
+ * Struct containing summary of cpu and memory add and reduce asks
+ */
 struct allocation_summary {
     unsigned int cpu_add;
     unsigned int cpu_reduce;
@@ -140,6 +146,20 @@ int RM_ALLOCATOR_ressource_adjustment(libxl_dominfo* dom_list, domain_load_t* do
 }
 
 // TODO add domain priorities
+/**
+ * Resolves the cpu allocation distribution when domains want to allocate more cpus than free
+ * Priorizing domains with higher cpu load
+ *
+ * Reduces the cpu allocation of domains that want to reduce it
+ * If not enough cpus are free to fulfill all allocation asks and there are domains with very high load (>90%)
+ * the allocation of domains with mid load (50>x>20) is reduced to give it to domains with very high load
+ * -> It is not always possible to fulfill all allocation asks so high load domains are priorized
+ *
+ * Returns 0 if operation was successful and -1 else
+ * Parameter dom_list array of libxl_dominfo with length num_domains
+ * Parameter dom_load array of domain_load_t with length num_domains
+ * Parameter num_domains number of domains in the arrays
+ */ 
 static int RM_ALLOCATOR_resolve_cpu_allocations(libxl_dominfo* dom_list, domain_load_t* dom_load, int num_domains)
 {
     int i, free_cpus, num_add = 0, num_standby = 0, standby_marker = 0;
@@ -228,6 +248,20 @@ static int RM_ALLOCATOR_resolve_cpu_allocations(libxl_dominfo* dom_list, domain_
 }
 
 // TODO add domain priorities
+/**
+ * Resolves the memory allocation distribution when domains want to allocate more memory than free
+ * Priorizing domains with higher memory load
+ *
+ * Reduces the memory allocation of domains that want to reduce it first
+ * If not enough memory is free to fulfill all allocation asks after that and there are domains with very high load (>90%)
+ * the allocation of domains with mid load (75>x>20) is reduced to give it to domains with very high load
+ * -> It is not always possible to fulfill all allocation asks so high load domains are priorized
+ *
+ * Returns 0 if operation was successful and -1 else
+ * Parameter dom_list array of libxl_dominfo with length num_domains
+ * Parameter dom_load array of domain_load_t with length num_domains
+ * Parameter num_domains number of domains in the arrays
+ */ 
 static int RM_ALLOCATOR_resolve_mem_allocations(libxl_dominfo* dom_list, domain_load_t* dom_load, int num_domains)
 {
     int i, free_mem, domain_mem, num_add = 0, num_standby = 0, standby_marker = 0;

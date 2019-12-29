@@ -179,7 +179,6 @@ int main(void)
 
     while(1)
     {
-        // TODO maybe check for ressource load more often than adapting the ressources?
         main_ressource_manager();
         sleep(5);
     }

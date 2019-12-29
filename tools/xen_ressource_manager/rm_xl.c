@@ -85,7 +85,8 @@ int64_t RM_XL_get_host_mem_total(void)
     
     vinfo = libxl_get_version_info(ctx);
     i = (1 << 20) / vinfo->pagesize;
-    
+
+    // Returned value should be in kB so multiply with 1024    
     return (info.total_pages / i) * 1024;
 }
 

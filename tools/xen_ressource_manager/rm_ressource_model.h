@@ -3,6 +3,13 @@
 
 #include <libxl.h>
 
+/**
+ * RM_RESSOURCE_MODEL provides inforamtion about the current status of the load of the domains currently running
+ */
+
+/**
+ * 
+ */
 struct domain_load {
     int dom_id;
     double cpu_load;
