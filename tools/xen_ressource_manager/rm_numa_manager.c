@@ -2,6 +2,9 @@
 
 #include <syslog.h>
 
+/**
+ * Structure containing the physical info regarding memory and CPUs and memory of a NUMA node
+ */
 struct numa_node_info {
     int total_cpus;
     int num_cpus;
@@ -38,11 +41,7 @@ static int get_free_pcpu(int node_id)
     if(node_info == NULL || node_info[node_id].free_cpu_id == NULL)
         return -1;
 
-    // TODO
-
     free_cpus = node_info[node_id].free_cpu_id;
-    //for(i = 0; i < node_info[node_id].total_cpus; i++)
-        //syslog(LOG_NOTICE, "[DEBUG get_free_pcpu] free_cpus[%d] = %d\n", i, free_cpus[i]);
 
     for(i = 0; i < node_info[node_id].total_cpus; i++)
     {
@@ -70,11 +69,13 @@ int RM_NUMA_MANAGER_init_numa_info(void)
     memset(node_info, 0, phys_info->nr_nodes * sizeof(numa_node_info_t));
     node_info_num_nodes = num_nodes;
 
+    // Set the number of physical CPUs of each node
     for(i = 0; i < num_cpu; i++)
     {
         node_info[cpu_top[i].node].num_cpus++;
     }
 
+    // Set the ids of physical CPUs for each node
     for(i = 0; i < num_nodes; i++)
     {
         node_info[i].total_cpus = num_cpu;
@@ -115,7 +116,6 @@ int RM_NUMA_MANAGER_update_vcpu_placing(libxl_dominfo* dom_list, libxl_dominfo* 
     // Reset free cpus and free mem of node_info struct array 
     for(i = 0; i < num_nodes; i++)
     {
-        // TODO init node_info[i].free_cpus correctly with correct pCPU ids
         memset(node_info[i].free_cpu_id, -1, num_cpu * sizeof(int));
 
         node_info[i].num_free_cpus = node_info[i].num_cpus;
