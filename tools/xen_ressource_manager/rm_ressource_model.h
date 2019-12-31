@@ -12,6 +12,7 @@
  */
 struct domain_load {
     int dom_id;
+    int priority;
     double cpu_load;
     double mem_load;
 };
@@ -47,6 +48,15 @@ double RM_RESSOURCE_MODEL_get_domain_cpuload(int dom_id);
  * Parameted dom_id id of domain
  */
 double RM_RESSOURCE_MODEL_get_domain_memload(int dom_id);
+
+/**
+ * Returns the priority of a domain
+ * Returns -1 if the given id belongs to no active domain
+ *
+ * Returns priority from 1 (low) to 5 (high)
+ * Parameter dom_id id of domain
+ */
+int RM_RESSOURCE_MODEL_get_domain_priority(int dom_id);
 
 /**
  * Returns the currently used physical cpus by domains

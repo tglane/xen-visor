@@ -19,7 +19,7 @@ int RM_RESSOURCE_MODEL_init(void)
         ressource_data = malloc(sizeof(domain_load_t));
         if(ressource_data == NULL)
             return -1;
-        ressource_data[0] = (domain_load_t) {-1, 0.0, 0.0};
+        ressource_data[0] = (domain_load_t) {-1, -1, 0.0, 0.0};
     }
     return 0;
 }
@@ -52,6 +52,16 @@ double RM_RESSOURCE_MODEL_get_domain_memload(int dom_id)
     return ressource_data[dom_id].mem_load;
 }
 
+int RM_RESSOURCE_MODEL_get_domain_priority(int dom_id)
+{
+    if(ressource_data == NULL)
+        return -1;
+
+    if(dom_id < 0)
+        return -1;
+
+    return ressource_data[dom_id].priority;
+}
 
 int RM_RESSOURCE_MODEL_get_used_cpus(void)
 {
@@ -65,7 +75,7 @@ int64_t RM_RESSOURCE_MODEL_get_used_memory(void)
 
 int RM_RESSOURCE_MODEL_update(libxl_dominfo* dom_list, int num_domains)
 {
-    int i, j;
+    int i, j, priority;
     double memload, cpuload;
 
     if(!RM_XENSTORE_initialized())
@@ -87,13 +97,14 @@ int RM_RESSOURCE_MODEL_update(libxl_dominfo* dom_list, int num_domains)
             
             for(j = max_domain_id + 1; j < dom_list[i].domid; j++)
             {
-                ressource_data[j] = (domain_load_t) {-1, 0.0, 0.0};
+                ressource_data[j] = (domain_load_t) {-1, -1, 0.0, 0.0};
             }
             max_domain_id = dom_list[i].domid;
         }
 
         memload = RM_XENSTORE_read_domain_memload(dom_list[i].domid);
         cpuload = RM_XENSTORE_read_domain_cpuload(dom_list[i].domid); 
+        priority = RM_XENSTORE_read_domain_priority(dom_list[i].domid);
 
         host_cpus_used += dom_list[i].vcpu_online;
         host_memory_used += (dom_list[i].current_memkb + dom_list[i].outstanding_memkb);
@@ -102,6 +113,7 @@ int RM_RESSOURCE_MODEL_update(libxl_dominfo* dom_list, int num_domains)
         if(memload < 0 || cpuload < 0)
         {
             ressource_data[dom_list[i].domid].dom_id = -1;
+            ressource_data[dom_list[i].domid].priority = -1;
             ressource_data[dom_list[i].domid].cpu_load = 0.0;
             ressource_data[dom_list[i].domid].mem_load = 0.0;
         }
@@ -109,6 +121,9 @@ int RM_RESSOURCE_MODEL_update(libxl_dominfo* dom_list, int num_domains)
         {
             // Calculate exponential moving average
             ressource_data[dom_list[i].domid].dom_id = dom_list[i].domid;
+            ressource_data[dom_list[i].domid].dom_id = priority;
+
+            // Calculate exponential moving average
             ressource_data[dom_list[i].domid].cpu_load = 
                 (WEIGHT * cpuload) + (1.0 - WEIGHT) * ressource_data[dom_list[i].domid].cpu_load;
             ressource_data[dom_list[i].domid].mem_load = 

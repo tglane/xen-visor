@@ -45,5 +45,14 @@ double RM_XENSTORE_read_domain_memload(int domid);
  */
 double RM_XENSTORE_read_domain_cpuload(int domid);
 
+/**
+ * Reads the priority of a domain if the domain has one
+ *
+ * Returns the priority of a domain from 1(low) to 5(high)
+ * Returns 3 as default priority if domain has no priority explicitly set
+ * Parameter domid is the id of the domain
+ */
+int RM_XENSTORE_read_domain_priority(int domid);
+
 #endif
 

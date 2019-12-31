@@ -53,7 +53,7 @@ double RM_XENSTORE_read_domain_memload(int domid)
     mem_total = atoi(read_val);
     
     mem_load = ((double) mem_usage / (double) mem_total) * 100;
-
+    free(read_val);
     return mem_load;
 }
 
@@ -73,6 +73,30 @@ double RM_XENSTORE_read_domain_cpuload(int domid)
         return -1;
 
     cpuload = atof(read_val);
+    free(read_val);
     return cpuload;
+}
+
+int RM_XENSTORE_read_domain_priority(int domid)
+{
+    char path[31];
+    char* read_val;
+    unsigned int read_length; 
+    int priority;
+
+    if(xsh == NULL)
+        return -1;
+
+    snprintf(path, 31, "/local/domain/%d/data/priority", domid);
+    read_val = xs_read(xsh, XBT_NULL, path, &read_length);
+    if(read_val == NULL)
+        return 3;
+
+    priority = atoi(read_val);
+    free(read_val);
+    if(0 < priority && priority < 6)
+        return priority;
+    else
+        return -1;
 }
 
