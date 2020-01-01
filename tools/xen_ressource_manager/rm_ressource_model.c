@@ -121,7 +121,7 @@ int RM_RESSOURCE_MODEL_update(libxl_dominfo* dom_list, int num_domains)
         {
             // Calculate exponential moving average
             ressource_data[dom_list[i].domid].dom_id = dom_list[i].domid;
-            ressource_data[dom_list[i].domid].dom_id = priority;
+            ressource_data[dom_list[i].domid].priority = priority;
 
             // Calculate exponential moving average
             ressource_data[dom_list[i].domid].cpu_load = 
