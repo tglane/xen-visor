@@ -252,11 +252,6 @@ static int RM_ALLOCATOR_resolve_cpu_allocations(libxl_dominfo* dom_list, domain_
             // If more domains with higher load than 90 percent than free cpus availabe
             int j;
 
-            syslog(LOG_NOTICE, "###################################### cpu standby_domains:\n");
-            for(i = 0; i < num_standby; i++)
-                syslog(LOG_NOTICE, "id: %d\n", standby_domains[i]);
-            syslog(LOG_NOTICE, "######################################\n");
-            
             for(j = 0; j < num_standby && standby_domains[j] >= 0; j++)
             {
                 if(RM_RESSOURCE_MODEL_get_domain_cpuload(standby_domains[j]) < 50 &&
@@ -365,11 +360,6 @@ static int RM_ALLOCATOR_resolve_mem_allocations(libxl_dominfo* dom_list, domain_
                 && standby_domains != NULL)
         {
             int j; 
-
-            syslog(LOG_NOTICE, "###################################### mem standby_domains:\n");
-            for(i = 0; i < num_standby; i++)
-                syslog(LOG_NOTICE, "id: %d\n", standby_domains[i]);
-            syslog(LOG_NOTICE, "######################################\n");
 
             for(j = 0; j < num_standby && standby_domains[j] >= 0; j++)
             {
