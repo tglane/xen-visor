@@ -251,11 +251,11 @@ static int RM_ALLOCATOR_resolve_cpu_allocations(libxl_dominfo* dom_list, domain_
         {
             // If more domains with higher load than 90 percent than free cpus availabe
             int j;
-
+            
             for(j = 0; j < num_standby && standby_domains[j] >= 0; j++)
             {
-                if(RM_RESSOURCE_MODEL_get_domain_cpuload(standby_domains[j]) < 50 &&
-                        RM_RESSOURCE_MODEL_get_domain_priority(receive_domains[i]) >= RM_RESSOURCE_MODEL_get_domain_priority(standby_domains[j]))
+                if(RM_RESSOURCE_MODEL_get_domain_cpuload(standby_domains[j]) < (35 + (RM_RESSOURCE_MODEL_get_domain_priority(receive_domains[i]) * 5))
+                        && RM_RESSOURCE_MODEL_get_domain_priority(receive_domains[i]) >= RM_RESSOURCE_MODEL_get_domain_priority(standby_domains[j]))
                 {
                     if(RM_XL_change_vcpu(standby_domains[j], -1) == 0)
                     {
@@ -363,8 +363,8 @@ static int RM_ALLOCATOR_resolve_mem_allocations(libxl_dominfo* dom_list, domain_
 
             for(j = 0; j < num_standby && standby_domains[j] >= 0; j++)
             {
-                if(RM_RESSOURCE_MODEL_get_domain_memload(standby_domains[j]) < 75 &&
-                        RM_RESSOURCE_MODEL_get_domain_priority(receive_domains[i]) >= RM_RESSOURCE_MODEL_get_domain_priority(standby_domains[j]))
+                if(RM_RESSOURCE_MODEL_get_domain_memload(standby_domains[j]) < (60 + (RM_RESSOURCE_MODEL_get_domain_priority(receive_domains[i]) * 5))
+                        && RM_RESSOURCE_MODEL_get_domain_priority(receive_domains[i]) >= RM_RESSOURCE_MODEL_get_domain_priority(standby_domains[j]))
                 {
                     if(RM_XL_change_memory(standby_domains[j], -MEM_STEP) == 0)
                     {
