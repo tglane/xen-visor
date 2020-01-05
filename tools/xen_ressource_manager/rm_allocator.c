@@ -31,6 +31,30 @@ static allocation_ask_t* alloc_ask;
 static unsigned int num_domains = 0;
 static allocation_summary_t alloc_summary = (allocation_summary_t) {0, 0, 0, 0};
 
+static int compare_domains_by_cpuload(const void* a, const void* b)
+{
+    double first_load = RM_RESSOURCE_MODEL_get_domain_cpuload(*(int*) a), sec_load = RM_RESSOURCE_MODEL_get_domain_cpuload(*(int*) b);
+
+    if(first_load == -1)
+        return 1;
+    else if(sec_load == -1)
+        return -1;
+    else
+        return first_load - sec_load;
+}
+
+static int compare_domains_by_memload(const void* a, const void* b)
+{
+    double first_load = RM_RESSOURCE_MODEL_get_domain_memload(*(int*) a), sec_load = RM_RESSOURCE_MODEL_get_domain_memload(*(int*) b);
+
+    if(first_load == -1)
+        return 1;
+    else if(sec_load == -1)
+        return -1;
+    else
+        return first_load - sec_load;    
+}
+
 int RM_ALLOCATOR_allocation_ask(domain_load_t* domain, libxl_dominfo dom_info)
 {
     int64_t domain_memory;
@@ -161,7 +185,7 @@ int RM_ALLOCATOR_ressource_adjustment(libxl_dominfo* dom_list, domain_load_t* do
  */ 
 static int RM_ALLOCATOR_resolve_cpu_allocations(libxl_dominfo* dom_list, domain_load_t* dom_load, int num_domains)
 {
-    int i, free_cpus, num_add = 0, num_standby = 0, standby_marker = 0;
+    int i, free_cpus, num_add = 0, num_standby = 0;
     int* receive_domains;
     int* standby_domains;
 
@@ -222,19 +246,24 @@ static int RM_ALLOCATOR_resolve_cpu_allocations(libxl_dominfo* dom_list, domain_
             syslog(LOG_NOTICE, "ADDED CPU TO: %d; Using a free cpu\n", receive_domains[i]);
             free_cpus--;
         }
-        else if(RM_RESSOURCE_MODEL_get_domain_cpuload(receive_domains[i]) > 90 && standby_domains != NULL)
+        else if(RM_RESSOURCE_MODEL_get_domain_cpuload(receive_domains[i]) > (105 - (RM_RESSOURCE_MODEL_get_domain_priority(receive_domains[i]) * 5))
+                && standby_domains != NULL)
         {
             // If more domains with higher load than 90 percent than free cpus availabe
             int j;
-            for(j = standby_marker; j < num_standby && standby_domains[j] >= 0; j++)
+
+            for(j = 0; j < num_standby && standby_domains[j] >= 0; j++)
             {
                 if(RM_RESSOURCE_MODEL_get_domain_cpuload(standby_domains[j]) < 50 &&
                         RM_RESSOURCE_MODEL_get_domain_priority(receive_domains[i]) >= RM_RESSOURCE_MODEL_get_domain_priority(standby_domains[j]))
                 {
-                    standby_marker = j;
-                    RM_XL_change_vcpu(standby_domains[j], -1);
-                    RM_XL_change_vcpu(receive_domains[i], 1);
-                    syslog(LOG_NOTICE, "ADDED CPU to: %d; Using Cpu from domain: %d\n", receive_domains[i], standby_domains[j]);
+                    if(RM_XL_change_vcpu(standby_domains[j], -1) == 0)
+                    {
+                        if(RM_XL_change_vcpu(receive_domains[i], 1) == 0)
+                            syslog(LOG_NOTICE, "ADDED CPU to: %d; Using Cpu from domain: %d\n", receive_domains[i], standby_domains[j]);
+                        
+                        qsort(standby_domains, num_standby, sizeof(int), compare_domains_by_cpuload);
+                    }
                     break;
                 }
             }
@@ -263,7 +292,7 @@ static int RM_ALLOCATOR_resolve_cpu_allocations(libxl_dominfo* dom_list, domain_
  */ 
 static int RM_ALLOCATOR_resolve_mem_allocations(libxl_dominfo* dom_list, domain_load_t* dom_load, int num_domains)
 {
-    int i, free_mem, domain_mem, num_add = 0, num_standby = 0, standby_marker = 0;
+    int i, free_mem, domain_mem, num_add = 0, num_standby = 0;
     int* receive_domains;
     int* standby_domains;
 
@@ -326,20 +355,22 @@ static int RM_ALLOCATOR_resolve_mem_allocations(libxl_dominfo* dom_list, domain_
             free_mem--;
             syslog(LOG_NOTICE, "ADDED MEM TO: %d; Using free mem\n", receive_domains[i]);
         }
-        else if(RM_RESSOURCE_MODEL_get_domain_memload(receive_domains[i] > 90 && standby_domains != NULL))
+        else if(RM_RESSOURCE_MODEL_get_domain_memload(receive_domains[i]) > (105 - (RM_RESSOURCE_MODEL_get_domain_priority(receive_domains[i]) * 5))
+                && standby_domains != NULL)
         {
             int j; 
 
-            for(j = standby_marker; j < num_standby && standby_domains[j] >= 0; j++)
+            for(j = 0; j < num_standby && standby_domains[j] >= 0; j++)
             {
                 if(RM_RESSOURCE_MODEL_get_domain_memload(standby_domains[j]) < 75 &&
                         RM_RESSOURCE_MODEL_get_domain_priority(receive_domains[i]) >= RM_RESSOURCE_MODEL_get_domain_priority(standby_domains[j]))
                 {
-                    standby_marker = j;
                     if(RM_XL_change_memory(standby_domains[j], -MEM_STEP) == 0)
                     {
                         if(RM_XL_change_memory(receive_domains[i], MEM_STEP) == 0)
                             syslog(LOG_NOTICE, "ADDED MEM to: %d; Using mem from domain: %d\n", receive_domains[i], standby_domains[j]);
+                        
+                        qsort(standby_domains, num_standby, sizeof(int), compare_domains_by_memload);
                     }
                     break;
                 }
