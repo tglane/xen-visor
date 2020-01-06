@@ -19,7 +19,7 @@ int RM_RESSOURCE_MODEL_init(void)
         ressource_data = malloc(sizeof(domain_load_t));
         if(ressource_data == NULL)
             return -1;
-        ressource_data[0] = (domain_load_t) {-1, -1, 0, 0, 0.0, 0.0};
+        ressource_data[0] = (domain_load_t) {-1, -1, 0, 0, -1.0, -1.0};
     }
     return 0;
 }
@@ -98,7 +98,7 @@ int RM_RESSOURCE_MODEL_update(libxl_dominfo* dom_list, int num_domains)
             
             for(j = max_domain_id + 1; j < dom_list[i].domid; j++)
             {
-                ressource_data[j] = (domain_load_t) {-1, -1, 0, 0, 0.0, 0.0};
+                ressource_data[j] = (domain_load_t) {-1, -1, 0, 0, -1.0, -1.0};
             }
             max_domain_id = dom_list[i].domid;
         }
