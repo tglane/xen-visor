@@ -137,6 +137,8 @@ int RM_ALLOCATOR_ressource_adjustment(libxl_dominfo* dom_list, domain_load_t* do
             {
                 syslog(LOG_NOTICE, "direct CPU_SET for id: %d\n", dom_list[i].domid);
                 RM_XL_change_vcpu(dom_list[i].domid, alloc_ask[dom_list[i].domid].cpu_ask);
+
+                dom_load[dom_list[i].domid].vcpu_used = dom_list[i].vcpu_online + alloc_ask[dom_list[i].domid].cpu_ask;
             }
         }
     }
@@ -157,6 +159,9 @@ int RM_ALLOCATOR_ressource_adjustment(libxl_dominfo* dom_list, domain_load_t* do
             { 
                 syslog(LOG_NOTICE, "direct MEM_SET for id: %d with %d\n", dom_list[i].domid, MEM_STEP * alloc_ask[dom_list[i].domid].mem_ask);
                 RM_XL_change_memory(dom_list[i].domid, MEM_STEP * alloc_ask[dom_list[i].domid].mem_ask);
+            
+                dom_load[dom_list[i].domid].mem_used = dom_list[i].current_memkb + dom_list[i].outstanding_memkb + 
+                    (MEM_STEP * alloc_ask[dom_list[i].domid].mem_ask);
             }
         }
     }
@@ -222,7 +227,8 @@ static int RM_ALLOCATOR_resolve_cpu_allocations(libxl_dominfo* dom_list, domain_
         {
             int j;
 
-            for(j = num_standby; (j >= 0 && (RM_RESSOURCE_MODEL_get_domain_cpuload(standby_domains[j]) > dom_load[dom_list[i].domid].cpu_load || RM_RESSOURCE_MODEL_get_domain_cpuload(standby_domains[j]) == -1)); j--)
+            for(j = num_standby; (j >= 0 && (RM_RESSOURCE_MODEL_get_domain_cpuload(standby_domains[j]) > dom_load[dom_list[i].domid].cpu_load 
+                || RM_RESSOURCE_MODEL_get_domain_cpuload(standby_domains[j]) == -1)); j--)
             {
                 standby_domains[j + 1] = standby_domains[j];
             }
@@ -242,9 +248,13 @@ static int RM_ALLOCATOR_resolve_cpu_allocations(libxl_dominfo* dom_list, domain_
     {
         if(free_cpus > 0)
         {
-            RM_XL_change_vcpu(receive_domains[i], alloc_ask[receive_domains[i]].cpu_ask);
-            syslog(LOG_NOTICE, "ADDED CPU TO: %d; Using a free cpu\n", receive_domains[i]);
-            free_cpus--;
+            if(RM_XL_change_vcpu(receive_domains[i], alloc_ask[receive_domains[i]].cpu_ask) == 0)
+            {
+                dom_load[receive_domains[i]].vcpu_used = dom_list[receive_domains[i]].vcpu_online + alloc_ask[receive_domains[i]].cpu_ask;
+                free_cpus--;
+
+                syslog(LOG_NOTICE, "ADDED CPU TO: %d; Using a free cpu\n", receive_domains[i]);
+            }
         }
         else if(RM_RESSOURCE_MODEL_get_domain_cpuload(receive_domains[i]) > (105 - (RM_RESSOURCE_MODEL_get_domain_priority(receive_domains[i]) * 5))
                 && standby_domains != NULL)
@@ -259,12 +269,18 @@ static int RM_ALLOCATOR_resolve_cpu_allocations(libxl_dominfo* dom_list, domain_
                 {
                     if(RM_XL_change_vcpu(standby_domains[j], -1) == 0)
                     {
+                        dom_load[standby_domains[j]].vcpu_used = dom_list[standby_domains[j]].vcpu_online - 1;
+
                         if(RM_XL_change_vcpu(receive_domains[i], 1) == 0)
+                        {
+                            dom_load[receive_domains[i]].vcpu_used = dom_list[receive_domains[i]].vcpu_online + alloc_ask[receive_domains[i]].cpu_ask;
                             syslog(LOG_NOTICE, "ADDED CPU to: %d; Using Cpu from domain: %d\n", receive_domains[i], standby_domains[j]);
-                        
+                        }
+
                         standby_domains[j] = -1;
                         qsort(standby_domains, num_standby, sizeof(int), compare_domains_by_cpuload);
                     }
+
                     break;
                 }
             }
@@ -332,7 +348,8 @@ static int RM_ALLOCATOR_resolve_mem_allocations(libxl_dominfo* dom_list, domain_
         {
             int j;
             
-            for(j = num_standby; (j >= 0 && (RM_RESSOURCE_MODEL_get_domain_memload(standby_domains[j]) > dom_load[dom_list[i].domid].mem_load || RM_RESSOURCE_MODEL_get_domain_memload(standby_domains[j]) == -1)); j--)
+            for(j = num_standby; (j >= 0 && (RM_RESSOURCE_MODEL_get_domain_memload(standby_domains[j]) > dom_load[dom_list[i].domid].mem_load 
+                || RM_RESSOURCE_MODEL_get_domain_memload(standby_domains[j]) == -1)); j--)
             {
                 standby_domains[j + 1] = standby_domains[j];
             }
@@ -350,11 +367,17 @@ static int RM_ALLOCATOR_resolve_mem_allocations(libxl_dominfo* dom_list, domain_
     // Give all available MEM to domains that want more
     for(i = 0; i < alloc_summary.mem_add; i++)
     {
+        domain_mem = dom_list[receive_domains[i]].current_memkb + dom_list[receive_domains[i]].outstanding_memkb;
+
         if(free_mem > 0)
         {
-            RM_XL_change_memory(receive_domains[i], MEM_STEP);
-            free_mem--;
-            syslog(LOG_NOTICE, "ADDED MEM TO: %d; Using free mem\n", receive_domains[i]);
+            if(RM_XL_change_memory(receive_domains[i], MEM_STEP) == 0)
+            {
+                dom_load[receive_domains[i]].mem_used = domain_mem + alloc_ask[receive_domains[i]].mem_ask;
+                free_mem--;
+                
+                syslog(LOG_NOTICE, "ADDED MEM TO: %d; Using free mem\n", receive_domains[i]);
+            }
         }
         else if(RM_RESSOURCE_MODEL_get_domain_memload(receive_domains[i]) > (105 - (RM_RESSOURCE_MODEL_get_domain_priority(receive_domains[i]) * 5))
                 && standby_domains != NULL)
@@ -368,12 +391,19 @@ static int RM_ALLOCATOR_resolve_mem_allocations(libxl_dominfo* dom_list, domain_
                 {
                     if(RM_XL_change_memory(standby_domains[j], -MEM_STEP) == 0)
                     {
+                        dom_load[standby_domains[j]].mem_used = (dom_list[standby_domains[j]].current_memkb + 
+                            dom_list[standby_domains[j]].outstanding_memkb) - MEM_STEP;
+
                         if(RM_XL_change_memory(receive_domains[i], MEM_STEP) == 0)
+                        {
+                            dom_load[receive_domains[i]].mem_used = domain_mem + alloc_ask[receive_domains[j]].mem_ask;
                             syslog(LOG_NOTICE, "ADDED MEM to: %d; Using mem from domain: %d\n", receive_domains[i], standby_domains[j]);
-                        
+                        }
+
                         standby_domains[j] = -1;
                         qsort(standby_domains, num_standby, sizeof(int), compare_domains_by_memload);
                     }
+
                     break;
                 }
             }

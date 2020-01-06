@@ -2,6 +2,7 @@
 #define RM_NUMA_MANAGER_H
 
 #include <rm_xl.h>
+#include <rm_ressource_model.h>
 
 /**
  * RM_NUMA_MANAGER is used to pin the vCPUs of the domains on physical CPUs paying attention to the NUMA 
@@ -32,7 +33,7 @@ void RM_NUMA_MANAGER_close(void);
  * Parameter s_dom_list same array as dom_list but sorted by number of vCPUs the domains use
  * Parameter num_domains number of domains in the arrays mentioned before
  */
-int RM_NUMA_MANAGER_update_vcpu_placing(libxl_dominfo* dom_list, libxl_dominfo* s_dom_list, int num_domains);
+int RM_NUMA_MANAGER_update_vcpu_placing(libxl_dominfo* dom_list, libxl_dominfo* s_dom_list, domain_load_t* dom_load, int num_domains);
 
 #endif
 

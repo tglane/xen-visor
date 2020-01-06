@@ -13,6 +13,8 @@
 struct domain_load {
     int dom_id;
     int priority;
+    int vcpu_used;
+    int64_t mem_used;
     double cpu_load;
     double mem_load;
 };

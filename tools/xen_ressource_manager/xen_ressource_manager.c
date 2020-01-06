@@ -159,7 +159,7 @@ int main_ressource_manager(void)
         }
 
         if(RM_ALLOCATOR_ressource_adjustment(dom_list, domain_load, num_domains) == 0)
-            RM_NUMA_MANAGER_update_vcpu_placing(dom_list, s_dom_list, num_domains);
+            RM_NUMA_MANAGER_update_vcpu_placing(dom_list, s_dom_list, domain_load, num_domains);
     }
 
     syslog(LOG_NOTICE, "\n");

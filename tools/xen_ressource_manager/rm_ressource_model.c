@@ -19,7 +19,7 @@ int RM_RESSOURCE_MODEL_init(void)
         ressource_data = malloc(sizeof(domain_load_t));
         if(ressource_data == NULL)
             return -1;
-        ressource_data[0] = (domain_load_t) {-1, -1, 0.0, 0.0};
+        ressource_data[0] = (domain_load_t) {-1, -1, 0, 0, 0.0, 0.0};
     }
     return 0;
 }
@@ -75,7 +75,8 @@ int64_t RM_RESSOURCE_MODEL_get_used_memory(void)
 
 int RM_RESSOURCE_MODEL_update(libxl_dominfo* dom_list, int num_domains)
 {
-    int i, j, priority;
+    int i, j, priority, vcpu_used;
+    int64_t mem_used;
     double memload, cpuload;
 
     if(!RM_XENSTORE_initialized())
@@ -97,7 +98,7 @@ int RM_RESSOURCE_MODEL_update(libxl_dominfo* dom_list, int num_domains)
             
             for(j = max_domain_id + 1; j < dom_list[i].domid; j++)
             {
-                ressource_data[j] = (domain_load_t) {-1, -1, 0.0, 0.0};
+                ressource_data[j] = (domain_load_t) {-1, -1, 0, 0, 0.0, 0.0};
             }
             max_domain_id = dom_list[i].domid;
         }
@@ -106,22 +107,28 @@ int RM_RESSOURCE_MODEL_update(libxl_dominfo* dom_list, int num_domains)
         cpuload = RM_XENSTORE_read_domain_cpuload(dom_list[i].domid); 
         priority = RM_XENSTORE_read_domain_priority(dom_list[i].domid);
 
-        host_cpus_used += dom_list[i].vcpu_online;
-        host_memory_used += (dom_list[i].current_memkb + dom_list[i].outstanding_memkb);
+        vcpu_used = dom_list[i].vcpu_online;
+        mem_used = dom_list[i].current_memkb + dom_list[i].outstanding_memkb;
+
+        host_cpus_used += vcpu_used;
+        host_memory_used += mem_used; 
 
         // Save current domain load and calculate average load only if there is load data
         if(memload < 0 || cpuload < 0)
         {
             ressource_data[dom_list[i].domid].dom_id = -1;
             ressource_data[dom_list[i].domid].priority = -1;
+            ressource_data[dom_list[i].domid].vcpu_used = 0;
+            ressource_data[dom_list[i].domid].mem_used = 0;
             ressource_data[dom_list[i].domid].cpu_load = 0.0;
             ressource_data[dom_list[i].domid].mem_load = 0.0;
         }
         else
         {
-            // Calculate exponential moving average
             ressource_data[dom_list[i].domid].dom_id = dom_list[i].domid;
             ressource_data[dom_list[i].domid].priority = priority;
+            ressource_data[dom_list[i].domid].vcpu_used = vcpu_used;
+            ressource_data[dom_list[i].domid].mem_used = mem_used;
 
             // Calculate exponential moving average
             ressource_data[dom_list[i].domid].cpu_load = 
