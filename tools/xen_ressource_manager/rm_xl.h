@@ -117,6 +117,23 @@ int RM_XL_pin_vcpu(int dom_id, int vcpu_id, int pcpu_id, int pin_type);
 int RM_XL_change_vcpu(int domid, int change_vcpus);
 
 /**
+ * Adds one vCPU that is currently unused to a domain if there is a free one available
+ *
+ * Returns the id of the vCPU that was set online or -1 if none was brought back online
+ * Parameter domid is the id of the domain
+ */
+int RM_XL_add_vcpu(int domid);
+
+/**
+ * Removes a vCPU from a domain
+ * Tries to remove a vCPU that is currently blocked and not running if possible
+ * 
+ * Returns the id of the vCPU that was set offline or -1 if it was not successful
+ * Parameter domid is the id of the domain
+ */
+int RM_XL_remove_vcpu(int domid);
+
+/**
  * Change amount of memory a domain can use by an offset in kilobyte
  * 
  * Returns 0 if successful and -1 if not (e.g. not enough free physical memory)

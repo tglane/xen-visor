@@ -180,7 +180,7 @@ int RM_XL_change_vcpu(int domid, int change_vcpus)
         return -1;
     }
 
-    libxl_cpu_bitmap_alloc(ctx, &cpu_map, online_vcpus + 1);
+    libxl_cpu_bitmap_alloc(ctx, &cpu_map, online_vcpus + change_vcpus);
     for(i = 0; i < online_vcpus + change_vcpus; i++)
     {
         libxl_bitmap_set(&cpu_map, i);
@@ -190,6 +190,83 @@ int RM_XL_change_vcpu(int domid, int change_vcpus)
     libxl_bitmap_dispose(&cpu_map);
     libxl_dominfo_dispose(&domain_info);
     return 0;
+}
+
+int RM_XL_add_vcpu(int domid)
+{
+    int i, vcpu_added = -1, num_vcpus;
+    libxl_vcpuinfo* vcpu_info = RM_XL_get_vcpu_list(domid, &num_vcpus);
+    libxl_bitmap cpu_map;
+
+    if(ctx == NULL)
+        return -1;
+    
+    libxl_cpu_bitmap_alloc(ctx, &cpu_map, libxl_get_max_cpus(ctx));
+
+    for(i = 0; i < num_vcpus; i++)
+    {
+        if(vcpu_info[i].online)
+            libxl_bitmap_set(&cpu_map, i);
+        else if(vcpu_added < 0 && !vcpu_info[i].online)
+        {
+            libxl_bitmap_set(&cpu_map, i);
+            vcpu_added = i;
+        }
+    }
+
+    if(vcpu_added > -1)
+        libxl_set_vcpuonline(ctx, domid, &cpu_map, NULL);
+
+    libxl_bitmap_dispose(&cpu_map);
+    libxl_vcpuinfo_list_free(vcpu_info, num_vcpus);
+    
+    return vcpu_added;
+}
+
+int RM_XL_remove_vcpu(int domid)
+{
+    int i, num_vcpus, vcpu_goal, vcpu_set = 0, vcpu_removed = -1;
+    libxl_dominfo domain_info;
+    libxl_vcpuinfo* vcpu_info = RM_XL_get_vcpu_list(domid, &num_vcpus);
+    libxl_bitmap cpu_map;
+
+    if(ctx == NULL)
+        return -1;
+
+    if(libxl_domain_info(ctx, &domain_info, domid) != 0)
+    {
+        libxl_dominfo_dispose(&domain_info);
+        return -1;
+    }
+
+    libxl_cpu_bitmap_alloc(ctx, &cpu_map, libxl_get_max_cpus(ctx));
+    vcpu_goal = domain_info.vcpu_online - 1;
+
+    for(i = 0; i < num_vcpus; i++)
+    {
+        if(vcpu_info[i].online && !vcpu_info[i].blocked && vcpu_info[i].running && vcpu_set < vcpu_goal)
+        {
+            libxl_bitmap_set(&cpu_map, i);
+            vcpu_set++;
+        }
+        else if(vcpu_info[i].online && vcpu_info[i].blocked && vcpu_set + (num_vcpus - i) <= vcpu_goal)
+        {
+            libxl_bitmap_set(&cpu_map, i);
+            vcpu_set++;
+        }
+        else 
+        {
+           vcpu_removed = i;
+        }
+    }
+
+    if(vcpu_removed > -1)
+        libxl_set_vcpuonline(ctx, domid, &cpu_map, NULL);
+
+    libxl_vcpuinfo_list_free(vcpu_info, num_vcpus);
+    libxl_dominfo_dispose(&domain_info);
+
+    return vcpu_removed;
 }
 
 int RM_XL_change_memory(int domid, int64_t change_kb)

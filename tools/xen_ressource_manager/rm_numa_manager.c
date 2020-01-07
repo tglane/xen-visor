@@ -20,10 +20,10 @@ static int node_info_num_nodes;
 
 static int compare_domains_by_vcpucount(const void* a, const void* b)
 {
-    libxl_dominfo* first = (libxl_dominfo*) a;
-    libxl_dominfo* sec = (libxl_dominfo*) b;
+    int first_vcpu = RM_RESSOURCE_MODEL_get_domain_vcpucount(*(int*) a);
+    int sec_vcpu = RM_RESSOURCE_MODEL_get_domain_vcpucount(*(int*) b);
 
-    return sec->vcpu_online - first->vcpu_online;
+    return sec_vcpu - first_vcpu;
 } 
 
 static int compare_nodes_by_freecpus(const void* a, const void* b)
@@ -185,15 +185,17 @@ int RM_NUMA_MANAGER_update_vcpu_placing(libxl_dominfo* dom_list, libxl_dominfo* 
                 // Place all domains vcpus and memory on the current node
                 for(k = vcpus_placed; k < num_vcpus; k++)
                 {
-                    if(k < dom_load[s_dom_list[i].domid].vcpu_used)
+                    //if(k < dom_load[s_dom_list[i].domid].vcpu_used)
+                    if(dom_load[s_dom_list[i].domid].vcpu_info[k].online)
                     {
                         int pcpu = get_free_pcpu(j);
-                        if(RM_XL_pin_vcpu(s_dom_list[i].domid, vcpu_info[k].vcpuid, pcpu, VCPU_PIN_HARD))
-                            return -1;
-
-                        syslog(LOG_NOTICE, "[NUMA - Placement 1] Domain: %d; vCPU: %d; pCPU: %d\n", s_dom_list[i].domid, vcpu_info[k].vcpuid, pcpu);
-                        node_info[j].num_free_cpus--;
-                        vcpus_placed++;
+                        if(RM_XL_pin_vcpu(s_dom_list[i].domid, vcpu_info[k].vcpuid, pcpu, VCPU_PIN_HARD) == 0)
+                        {
+                            syslog(LOG_NOTICE, "[NUMA - Placement 1] Domain: %d; vCPU: %d; pCPU: %d\n", s_dom_list[i].domid, vcpu_info[k].vcpuid, pcpu);
+                            
+                            node_info[j].num_free_cpus--;
+                            vcpus_placed++;
+                        }
                     }
                     else
                     {
@@ -213,16 +215,17 @@ int RM_NUMA_MANAGER_update_vcpu_placing(libxl_dominfo* dom_list, libxl_dominfo* 
                 // Place as much vcpus on the nodes cpus as possible except of one because of the memory and go to the next node
                 for(k = vcpus_placed; k < num_vcpus && node_info[j].num_free_cpus > 1; k++)
                 {
-                    if(k < dom_load[s_dom_list[i].domid].vcpu_used)
+                    //if(k < dom_load[s_dom_list[i].domid].vcpu_used)
+                    if(dom_load[s_dom_list[i].domid].vcpu_info[k].online)
                     {
                         int pcpu = get_free_pcpu(j);
-                        if(RM_XL_pin_vcpu(s_dom_list[i].domid, vcpu_info[k].vcpuid, pcpu, VCPU_PIN_HARD))
-                            return -1;
-
-                        syslog(LOG_NOTICE, "[NUMA - Placement 2] Domain: %d; vCPU: %d; pCPU: %d\n", s_dom_list[i].domid, vcpu_info[k].vcpuid, pcpu);
+                        if(RM_XL_pin_vcpu(s_dom_list[i].domid, vcpu_info[k].vcpuid, pcpu, VCPU_PIN_HARD) == 0)
+                        {
+                            syslog(LOG_NOTICE, "[NUMA - Placement 2] Domain: %d; vCPU: %d; pCPU: %d\n", s_dom_list[i].domid, vcpu_info[k].vcpuid, pcpu);
                         
-                        node_info[j].num_free_cpus--;
-                        vcpus_placed++;
+                            node_info[j].num_free_cpus--;
+                            vcpus_placed++;
+                        }
                     }
                     else
                     {
@@ -241,16 +244,17 @@ int RM_NUMA_MANAGER_update_vcpu_placing(libxl_dominfo* dom_list, libxl_dominfo* 
                 // Place as much vcpus and memory on the node as possible and go to the next node
                 for(k = vcpus_placed; k < num_vcpus && node_info[j].num_free_cpus > 0; k++)
                 {
-                    if(k < dom_load[s_dom_list[i].domid].vcpu_used)
+                    //if(k < dom_load[s_dom_list[i].domid].vcpu_used)
+                    if(dom_load[s_dom_list[i].domid].vcpu_info[k].online)
                     {
                         int pcpu = get_free_pcpu(j);
-                        if(RM_XL_pin_vcpu(s_dom_list[i].domid, vcpu_info[k].vcpuid, pcpu, VCPU_PIN_HARD))
-                            return -1;
-
-                        syslog(LOG_NOTICE, "[NUMA - Placement 3] Domain: %d; vCPU: %d; pCPU: %d\n", s_dom_list[i].domid, vcpu_info[k].vcpuid, pcpu);
+                        if(RM_XL_pin_vcpu(s_dom_list[i].domid, vcpu_info[k].vcpuid, pcpu, VCPU_PIN_HARD) == 0)
+                        {
+                            syslog(LOG_NOTICE, "[NUMA - Placement 3] Domain: %d; vCPU: %d; pCPU: %d\n", s_dom_list[i].domid, vcpu_info[k].vcpuid, pcpu);
                         
-                        node_info[j].num_free_cpus--;
-                        vcpus_placed++;
+                            node_info[j].num_free_cpus--;
+                            vcpus_placed++;
+                        }
                     }
                     else
                     {

@@ -133,12 +133,29 @@ int RM_ALLOCATOR_ressource_adjustment(libxl_dominfo* dom_list, domain_load_t* do
         // Resolving all allocation asks is possible
         for(i = 0; i < num_domains; i++)
         {
-            if(alloc_ask[dom_list[i].domid].cpu_ask != 0)
+            if(alloc_ask[dom_list[i].domid].cpu_ask < 0)
             {
-                syslog(LOG_NOTICE, "direct CPU_SET for id: %d\n", dom_list[i].domid);
-                RM_XL_change_vcpu(dom_list[i].domid, alloc_ask[dom_list[i].domid].cpu_ask);
+                int vcpu_removed;
+                
+                vcpu_removed = RM_XL_remove_vcpu(dom_list[i].domid);
+                if(vcpu_removed > -1)
+                {
+                    syslog(LOG_NOTICE, "direct CPU_REDUCE for id: %d\n", dom_list[i].domid);
+                    dom_load[dom_list[i].domid].vcpu_used = dom_list[i].vcpu_online - 1;
+                    dom_load[dom_list[i].domid].vcpu_info[vcpu_removed].online = false;
+                }
+            }
+            else if(alloc_ask[dom_list[i].domid].cpu_ask > 0)
+            {
+                int vcpu_added;
 
-                dom_load[dom_list[i].domid].vcpu_used = dom_list[i].vcpu_online + alloc_ask[dom_list[i].domid].cpu_ask;
+                vcpu_added = RM_XL_add_vcpu(dom_list[i].domid);
+                if(vcpu_added > -1)
+                {
+                    syslog(LOG_NOTICE, "direct CPU_ADD for id: %d\n", dom_list[i].domid);
+                    dom_load[dom_list[i].domid].vcpu_used = dom_list[i].vcpu_online + 1;
+                    dom_load[dom_list[i].domid].vcpu_info[vcpu_added].online = true;
+                }
             }
         }
     }
@@ -248,9 +265,12 @@ static int RM_ALLOCATOR_resolve_cpu_allocations(libxl_dominfo* dom_list, domain_
     {
         if(free_cpus > 0)
         {
-            if(RM_XL_change_vcpu(receive_domains[i], alloc_ask[receive_domains[i]].cpu_ask) == 0)
+            int vcpu_added = RM_XL_add_vcpu(receive_domains[i]);
+
+            if(vcpu_added > -1)
             {
-                dom_load[receive_domains[i]].vcpu_used = dom_list[receive_domains[i]].vcpu_online + alloc_ask[receive_domains[i]].cpu_ask;
+                dom_load[receive_domains[i]].vcpu_used = dom_list[receive_domains[i]].vcpu_online + 1;
+                dom_load[receive_domains[i]].vcpu_info[vcpu_added].online = true;
                 free_cpus--;
 
                 syslog(LOG_NOTICE, "ADDED CPU TO: %d; Using a free cpu\n", receive_domains[i]);
@@ -267,13 +287,20 @@ static int RM_ALLOCATOR_resolve_cpu_allocations(libxl_dominfo* dom_list, domain_
                 if(RM_RESSOURCE_MODEL_get_domain_cpuload(standby_domains[j]) < (35 + (RM_RESSOURCE_MODEL_get_domain_priority(receive_domains[i]) * 5))
                         && RM_RESSOURCE_MODEL_get_domain_priority(receive_domains[i]) >= RM_RESSOURCE_MODEL_get_domain_priority(standby_domains[j]))
                 {
-                    if(RM_XL_change_vcpu(standby_domains[j], -1) == 0)
-                    {
-                        dom_load[standby_domains[j]].vcpu_used = dom_list[standby_domains[j]].vcpu_online - 1;
+                    int vcpu_removed = RM_XL_remove_vcpu(standby_domains[j]);
 
-                        if(RM_XL_change_vcpu(receive_domains[i], 1) == 0)
+                    if(vcpu_removed > -1)
+                    {
+                        int vcpu_added;
+
+                        dom_load[standby_domains[j]].vcpu_used = dom_list[standby_domains[j]].vcpu_online - 1;
+                        dom_load[standby_domains[j]].vcpu_info[vcpu_removed].online = false;
+
+                        vcpu_added = RM_XL_add_vcpu(receive_domains[i]);
+                        if(vcpu_added > -1)
                         {
-                            dom_load[receive_domains[i]].vcpu_used = dom_list[receive_domains[i]].vcpu_online + alloc_ask[receive_domains[i]].cpu_ask;
+                            dom_load[receive_domains[i]].vcpu_used = dom_list[receive_domains[i]].vcpu_online + 1;
+                            dom_load[receive_domains[i]].vcpu_info[vcpu_added].online = true;
                             syslog(LOG_NOTICE, "ADDED CPU to: %d; Using Cpu from domain: %d\n", receive_domains[i], standby_domains[j]);
                         }
 

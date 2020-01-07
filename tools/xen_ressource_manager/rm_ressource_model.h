@@ -14,6 +14,8 @@ struct domain_load {
     int dom_id;
     int priority;
     int vcpu_used;
+    int num_vcpus;
+    libxl_vcpuinfo* vcpu_info;
     int64_t mem_used;
     double cpu_load;
     double mem_load;
@@ -59,6 +61,13 @@ double RM_RESSOURCE_MODEL_get_domain_memload(int dom_id);
  * Parameter dom_id id of domain
  */
 int RM_RESSOURCE_MODEL_get_domain_priority(int dom_id);
+
+/**
+ * Returns the number of currently online vCPUs of a domain
+ * Returns -1 if the given id belongs to no active domain
+ * Parameter dom_id is the if of the domain
+ */
+int RM_RESSOURCE_MODEL_get_domain_vcpucount(int dom_id);
 
 /**
  * Returns the currently used physical cpus by domains

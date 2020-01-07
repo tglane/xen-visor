@@ -128,7 +128,12 @@ int main_ressource_manager(void)
 
         for(i = 0; i < oversize; i++)
         {
-            RM_XL_change_vcpu(s_dom_list[i].domid, -1);
+            int vcpu_removed = RM_XL_remove_vcpu(s_dom_list[i].domid);
+            if(vcpu_removed > -1)
+            {
+                domain_load[s_dom_list[i].domid].vcpu_used -= 1;
+                domain_load[s_dom_list[i].domid].vcpu_info[vcpu_removed].online = false;
+            }
         }
     }
     // Check if used_mem > host_mem and adjust if necessary and possible
