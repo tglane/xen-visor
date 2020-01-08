@@ -133,26 +133,26 @@ int RM_ALLOCATOR_ressource_adjustment(libxl_dominfo* dom_list, domain_load_t* do
         // Resolving all allocation asks is possible
         for(i = 0; i < num_domains; i++)
         {
-            if(alloc_ask[dom_list[i].domid].cpu_ask < 0)
+            if(alloc_ask[dom_list[i].domid].cpu_ask < 0 && dom_load[dom_list[i].domid].dom_id > -1)
             {
                 int vcpu_removed;
                 
                 vcpu_removed = RM_XL_remove_vcpu(dom_list[i].domid);
                 if(vcpu_removed > -1)
                 {
-                    syslog(LOG_NOTICE, "direct CPU_REDUCE for id: %d\n", dom_list[i].domid);
+                    syslog(LOG_NOTICE, "direct CPU_REDUCE for id: %d; vcpu_id: %d\n", dom_list[i].domid, vcpu_removed);
                     dom_load[dom_list[i].domid].vcpu_used = dom_list[i].vcpu_online - 1;
                     dom_load[dom_list[i].domid].vcpu_info[vcpu_removed].online = false;
                 }
             }
-            else if(alloc_ask[dom_list[i].domid].cpu_ask > 0)
+            else if(alloc_ask[dom_list[i].domid].cpu_ask > 0 && dom_load[dom_list[i].domid].dom_id > -1)
             {
                 int vcpu_added;
 
                 vcpu_added = RM_XL_add_vcpu(dom_list[i].domid);
                 if(vcpu_added > -1)
                 {
-                    syslog(LOG_NOTICE, "direct CPU_ADD for id: %d\n", dom_list[i].domid);
+                    syslog(LOG_NOTICE, "direct CPU_ADD for id: %d; vcpu_id: %d\n", dom_list[i].domid, vcpu_added);
                     dom_load[dom_list[i].domid].vcpu_used = dom_list[i].vcpu_online + 1;
                     dom_load[dom_list[i].domid].vcpu_info[vcpu_added].online = true;
                 }
@@ -172,7 +172,7 @@ int RM_ALLOCATOR_ressource_adjustment(libxl_dominfo* dom_list, domain_load_t* do
         // Resolving all allocation asks is possible
         for(i = 0; i < num_domains; i++)
         {
-            if(alloc_ask[dom_list[i].domid].mem_ask != 0)
+            if(alloc_ask[dom_list[i].domid].mem_ask != 0 && dom_load[dom_list[i].domid].dom_id > -1)
             { 
                 syslog(LOG_NOTICE, "direct MEM_SET for id: %d with %d\n", dom_list[i].domid, MEM_STEP * alloc_ask[dom_list[i].domid].mem_ask);
                 RM_XL_change_memory(dom_list[i].domid, MEM_STEP * alloc_ask[dom_list[i].domid].mem_ask);
@@ -224,6 +224,10 @@ static int RM_ALLOCATOR_resolve_cpu_allocations(libxl_dominfo* dom_list, domain_
     // Order domains that want more CPUs by their load and remove CPUs from domains that want to reduce CPUs
     for(i = 0; i < num_domains; i++)
     {
+        // Dont do this for domains without ressource data stored (bricks)
+        if(dom_load[dom_list[i].domid].dom_id < 0)
+            continue;
+
         if(alloc_ask[dom_list[i].domid].cpu_ask < 0)
         {
             RM_XL_change_vcpu(dom_list[i].domid, alloc_ask[dom_list[i].domid].cpu_ask);
@@ -284,7 +288,7 @@ static int RM_ALLOCATOR_resolve_cpu_allocations(libxl_dominfo* dom_list, domain_
             
             for(j = 0; j < num_standby && standby_domains[j] >= 0; j++)
             {
-                if(RM_RESSOURCE_MODEL_get_domain_cpuload(standby_domains[j]) < (35 + (RM_RESSOURCE_MODEL_get_domain_priority(receive_domains[i]) * 5))
+                if(RM_RESSOURCE_MODEL_get_domain_cpuload(standby_domains[j]) < (40 + (RM_RESSOURCE_MODEL_get_domain_priority(receive_domains[i]) * 5))
                         && RM_RESSOURCE_MODEL_get_domain_priority(receive_domains[i]) >= RM_RESSOURCE_MODEL_get_domain_priority(standby_domains[j]))
                 {
                     int vcpu_removed = RM_XL_remove_vcpu(standby_domains[j]);

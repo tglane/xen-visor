@@ -78,7 +78,7 @@ int RM_RESSOURCE_MODEL_get_domain_vcpucount(int dom_id)
     if(ressource_data == NULL)
         return -1;
 
-    if(dom_id < 0)
+    if(dom_id < 0 || ressource_data[dom_id].dom_id == -1)
         return -1;
 
     return ressource_data[dom_id].vcpu_used;

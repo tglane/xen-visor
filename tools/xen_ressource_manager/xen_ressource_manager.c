@@ -176,11 +176,12 @@ int main_ressource_manager(void)
 
 int main(void)
 {
-    if(init_handle() < 0 || init_daemon() < 0)
-    {
-        close_handle();
+
+    if(init_daemon() < 0)
         exit(EXIT_FAILURE);
-    }
+
+    if(init_handle() < 0)
+        exit(EXIT_FAILURE);
 
     while(1)
     {
