@@ -228,7 +228,6 @@ int RM_XL_add_vcpu(int domid)
 int RM_XL_remove_vcpu(int domid)
 {
     int i, num_vcpus, vcpu_goal, vcpu_set = 0, vcpu_removed = -1;
-    int running = 0, blocked = 0, if_running = 0, if_blocked = 0;
     libxl_dominfo domain_info;
     libxl_vcpuinfo* vcpu_info = RM_XL_get_vcpu_list(domid, &num_vcpus);
     libxl_bitmap cpu_map;
@@ -257,22 +256,16 @@ int RM_XL_remove_vcpu(int domid)
 
     for(i = num_vcpus - 1; i >= 0; i--)
     {
-        if(vcpu_info[i].running)
-            running++;
-        if(vcpu_info[i].blocked)
-            blocked++;
 
         if(vcpu_info[i].online && !vcpu_info[i].blocked && vcpu_info[i].running && vcpu_set < vcpu_goal)
         {
             libxl_bitmap_set(&cpu_map, i);
             vcpu_set++;
-            if_running++;
         }
         else if(vcpu_info[i].online && vcpu_info[i].blocked && vcpu_set + (i + 1) <= vcpu_goal)
         {
             libxl_bitmap_set(&cpu_map, i);
             vcpu_set++;
-            if_blocked++;
         }
         else if(vcpu_info[i].online && vcpu_removed == -1)
         {

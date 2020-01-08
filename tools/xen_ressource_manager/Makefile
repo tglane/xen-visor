@@ -23,10 +23,7 @@ RM_OBJS += rm_ressource_model.o
 RM_OBJS += rm_allocator.o
 RM_OBJS += rm_numa_manager.o
 
-#genpath-target = $(call buildmakevars2header,_paths.h)
-#$(eval $(genpath-target))
 
-#$(RM_OBJS): _paths.h
 
 .PHONY: all
 all: xen_ressource_manager

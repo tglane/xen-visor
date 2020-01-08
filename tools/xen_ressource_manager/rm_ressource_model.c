@@ -45,7 +45,7 @@ double RM_RESSOURCE_MODEL_get_domain_cpuload(int dom_id)
     if(ressource_data == NULL)
         return -1;
 
-    if(dom_id < 0)
+    if(dom_id < 0 || ressource_data[dom_id].dom_id == -1)
         return -1;
 
     return ressource_data[dom_id].cpu_load;
@@ -56,7 +56,7 @@ double RM_RESSOURCE_MODEL_get_domain_memload(int dom_id)
     if(ressource_data == NULL)
         return -1;
 
-    if(dom_id < 0)
+    if(dom_id < 0 || ressource_data[dom_id].dom_id == -1)
         return -1;
 
     return ressource_data[dom_id].mem_load;
@@ -117,7 +117,7 @@ int RM_RESSOURCE_MODEL_update(libxl_dominfo* dom_list, int num_domains)
             if(ressource_data == NULL)
                 return -1;
             
-            for(j = max_domain_id + 1; j < dom_list[i].domid; j++)
+            for(j = max_domain_id + 1; j <= dom_list[i].domid; j++)
             {
                 ressource_data[j] = (domain_load_t) {-1, -1, 0, 0, NULL, 0, -1.0, -1.0};
             }
@@ -137,6 +137,7 @@ int RM_RESSOURCE_MODEL_update(libxl_dominfo* dom_list, int num_domains)
         // Save current domain load and calculate average load only if there is load data
         if(memload < 0 || cpuload < 0)
         {
+
             if(ressource_data[dom_list[i].domid].vcpu_info != NULL)
                 libxl_vcpuinfo_list_free(ressource_data[dom_list[i].domid].vcpu_info, ressource_data[dom_list[i].domid].num_vcpus);
 

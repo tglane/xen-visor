@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include <unistd.h> // just for sleep()
+#include <unistd.h>
 
 #include <syslog.h>
 #include <sys/stat.h>
@@ -115,10 +115,10 @@ int main_ressource_manager(void)
     
     s_dom_list = malloc(num_domains * sizeof(libxl_dominfo));
     memcpy(s_dom_list, dom_list, num_domains * sizeof(libxl_dominfo));
-
+    
     RM_RESSOURCE_MODEL_update(dom_list, num_domains);
     domain_load = RM_RESSOURCE_MODEL_get_ressource_data(&num_entries);
- 
+
     // Check if used_cpus > host_cpus and adjust if necessary and possible
     if(RM_RESSOURCE_MODEL_get_used_cpus() > RM_XL_get_host_cpu())
     {
@@ -128,11 +128,14 @@ int main_ressource_manager(void)
 
         for(i = 0; i < oversize; i++)
         {
-            int vcpu_removed = RM_XL_remove_vcpu(s_dom_list[i].domid);
-            if(vcpu_removed > -1)
+            if(domain_load[s_dom_list[i].domid].dom_id > -1)
             {
-                domain_load[s_dom_list[i].domid].vcpu_used -= 1;
-                domain_load[s_dom_list[i].domid].vcpu_info[vcpu_removed].online = false;
+                int vcpu_removed = RM_XL_remove_vcpu(s_dom_list[i].domid);
+                if(vcpu_removed > -1)
+                {
+                    domain_load[s_dom_list[i].domid].vcpu_used -= 1;
+                    domain_load[s_dom_list[i].domid].vcpu_info[vcpu_removed].online = false;
+                }
             }
         }
     }
