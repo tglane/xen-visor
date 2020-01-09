@@ -45,7 +45,7 @@ double RM_RESSOURCE_MODEL_get_domain_cpuload(int dom_id)
     if(ressource_data == NULL)
         return -1;
 
-    if(dom_id < 0 || ressource_data[dom_id].dom_id == -1)
+    if(dom_id < 0 || dom_id > max_domain_id || ressource_data[dom_id].dom_id == -1)
         return -1;
 
     return ressource_data[dom_id].cpu_load;
@@ -56,7 +56,7 @@ double RM_RESSOURCE_MODEL_get_domain_memload(int dom_id)
     if(ressource_data == NULL)
         return -1;
 
-    if(dom_id < 0 || ressource_data[dom_id].dom_id == -1)
+    if(dom_id < 0 || dom_id > max_domain_id || ressource_data[dom_id].dom_id == -1)
         return -1;
 
     return ressource_data[dom_id].mem_load;
@@ -67,7 +67,7 @@ int RM_RESSOURCE_MODEL_get_domain_priority(int dom_id)
     if(ressource_data == NULL)
         return -1;
 
-    if(dom_id < 0)
+    if(dom_id < 0 || dom_id > max_domain_id || ressource_data[dom_id].dom_id == -1)
         return -1;
 
     return ressource_data[dom_id].priority;
@@ -78,7 +78,7 @@ int RM_RESSOURCE_MODEL_get_domain_vcpucount(int dom_id)
     if(ressource_data == NULL)
         return -1;
 
-    if(dom_id < 0 || ressource_data[dom_id].dom_id == -1)
+    if(dom_id < 0 || dom_id > max_domain_id || ressource_data[dom_id].dom_id == -1)
         return -1;
 
     return ressource_data[dom_id].vcpu_used;

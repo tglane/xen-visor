@@ -27,6 +27,7 @@ struct allocation_summary {
 };
 typedef struct allocation_summary allocation_summary_t;
 
+/* Data structs containing hardware allocation asks for all monitored domains */
 static allocation_ask_t* alloc_ask;
 static unsigned int num_domains = 0;
 static allocation_summary_t alloc_summary = (allocation_summary_t) {0, 0, 0, 0};
