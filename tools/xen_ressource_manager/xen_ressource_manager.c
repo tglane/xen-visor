@@ -12,12 +12,23 @@
 #include <rm_allocator.h>
 #include <rm_numa_manager.h>
 
+domain_load_t* domain_load;
+int max_domain_id;
+
+allocation_summary_t alloc_summary;
+allocation_ask_t* alloc_ask;
+int num_entries;
+
+numa_node_info_t* node_info;
+int node_info_num_nodes;
+
+
 int compare_domains_by_cpuload(const void* a, const void* b)
 {
     libxl_dominfo* first = (libxl_dominfo*) a;
     libxl_dominfo* sec = (libxl_dominfo*) b;
-    double first_load = RM_RESSOURCE_MODEL_get_domain_cpuload(first->domid);
-    double sec_load = RM_RESSOURCE_MODEL_get_domain_cpuload(sec->domid);
+    double first_load = RM_RESSOURCE_MODEL_get_domain_cpuload(domain_load, max_domain_id, first->domid);
+    double sec_load = RM_RESSOURCE_MODEL_get_domain_cpuload(domain_load, max_domain_id, sec->domid);
  
     if(first->vcpu_online == 1) return 1;
     else if(sec->vcpu_online == 1) return -1; 
@@ -28,8 +39,8 @@ int compare_domains_by_memload(const void* a, const void* b)
 {
     libxl_dominfo* first = (libxl_dominfo*) a;
     libxl_dominfo* sec = (libxl_dominfo*) b;
-    double first_load = RM_RESSOURCE_MODEL_get_domain_memload(first->domid);
-    double sec_load = RM_RESSOURCE_MODEL_get_domain_memload(sec->domid);
+    double first_load = RM_RESSOURCE_MODEL_get_domain_memload(domain_load, max_domain_id, first->domid);
+    double sec_load = RM_RESSOURCE_MODEL_get_domain_memload(domain_load, max_domain_id, sec->domid);
     int64_t first_mem = first->current_memkb + first->outstanding_memkb;
     int64_t sec_mem = sec->current_memkb + sec->outstanding_memkb;
 
@@ -80,10 +91,12 @@ int init_handle(void)
     if(RM_XENSTORE_init() < 0)
         return -1;
 
-    if(RM_RESSOURCE_MODEL_init() < 0)
+    domain_load = RM_RESSOURCE_MODEL_init(&max_domain_id);
+    if(domain_load == NULL)
         return -1;
 
-    if(RM_NUMA_MANAGER_init_numa_info() < 0)
+    node_info = RM_NUMA_MANAGER_init_numa_info(&node_info_num_nodes);
+    if(node_info == NULL)
         return -1;
 
     return 0;
@@ -94,8 +107,8 @@ int init_handle(void)
  */
 void close_handle(void)
 {
-    RM_NUMA_MANAGER_close();
-    RM_RESSOURCE_MODEL_free();
+    RM_NUMA_MANAGER_close(node_info, node_info_num_nodes);
+    RM_RESSOURCE_MODEL_free(domain_load, max_domain_id);
     RM_XENSTORE_close();
     RM_XL_close();
 
@@ -104,10 +117,11 @@ void close_handle(void)
 
 int main_ressource_manager(void)
 {
-    int num_domains, num_entries, i;
+    //int num_domains, num_entries, i;
+    int num_domains, i;
     libxl_dominfo* dom_list;
     libxl_dominfo* s_dom_list;
-    domain_load_t* domain_load;
+    //domain_load_t* domain_load;
     
     dom_list = RM_XL_get_domain_list(&num_domains);
     if(dom_list == NULL)
@@ -116,8 +130,8 @@ int main_ressource_manager(void)
     s_dom_list = malloc(num_domains * sizeof(libxl_dominfo));
     memcpy(s_dom_list, dom_list, num_domains * sizeof(libxl_dominfo));
     
-    RM_RESSOURCE_MODEL_update(dom_list, num_domains);
-    domain_load = RM_RESSOURCE_MODEL_get_ressource_data(&num_entries);
+    RM_RESSOURCE_MODEL_update(domain_load, max_domain_id, dom_list, num_domains);
+    //domain_load = RM_RESSOURCE_MODEL_get_ressource_data(&num_entries);
 
     // Check if used_cpus > host_cpus and adjust if necessary and possible
     if(RM_RESSOURCE_MODEL_get_used_cpus() > RM_XL_get_host_cpu())
@@ -156,18 +170,18 @@ int main_ressource_manager(void)
         }
     }
 
-    syslog(LOG_NOTICE, "num_domains: %d; num_entries: %d\n", num_domains, num_entries);
+    syslog(LOG_NOTICE, "num_domains: %d; num_entries: %d\n", num_domains, max_domain_id);
     // Allocation asks and adjustments
-    if(num_domains <= num_entries)
+    if(num_domains <= max_domain_id)
     {
         for(i = 0; i < num_domains; i++)
         {
             if(domain_load[dom_list[i].domid].dom_id >= 0)
-                RM_ALLOCATOR_allocation_ask(&domain_load[dom_list[i].domid], dom_list[i]);
+                RM_ALLOCATOR_allocation_ask(&alloc_summary, alloc_ask, &num_entries, &domain_load[dom_list[i].domid], dom_list[i]);
         }
 
-        if(RM_ALLOCATOR_ressource_adjustment(dom_list, domain_load, num_domains) == 0)
-            RM_NUMA_MANAGER_update_vcpu_placing(dom_list, s_dom_list, domain_load, num_domains);
+        if(RM_ALLOCATOR_ressource_adjustment(&alloc_summary, alloc_ask, dom_list, domain_load, num_domains, max_domain_id) == 0)
+            RM_NUMA_MANAGER_update_vcpu_placing(node_info, node_info_num_nodes, dom_list, s_dom_list, domain_load, num_domains);
     }
 
     syslog(LOG_NOTICE, "\n");
