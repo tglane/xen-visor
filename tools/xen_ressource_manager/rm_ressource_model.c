@@ -7,33 +7,25 @@
 
 #define WEIGHT 0.75
 
-//static domain_load_t* ressource_data;
-//static int max_domain_id = 0;
+static domain_load_t* ressource_data;
+static int max_domain_id = 0;
 
 static unsigned int host_cpus_used = 0;
 static uint64_t host_memory_used = 0;
 
-domain_load_t* RM_RESSOURCE_MODEL_init(int* max_domain_id)
+int RM_RESSOURCE_MODEL_init(void)
 {
-    /*if(ressource_data == NULL)
+    if(ressource_data == NULL)
     {
         ressource_data = malloc(sizeof(domain_load_t));
         if(ressource_data == NULL)
             return -1;
         ressource_data[0] = (domain_load_t) {-1, -1, 0, 0, NULL, 0, -1.0, -1.0};
     }
-    return 0;*/
-
-    domain_load_t* ressource_data = malloc(sizeof(domain_load_t));
-    if(ressource_data == NULL)
-        return NULL;
-
-    ressource_data[0] = (domain_load_t) {-1, -1, 0, 0, NULL, 0, -1.0, -1.0};
-    *max_domain_id = 0;
-    return ressource_data;
+    return 0;
 }
 
-void RM_RESSOURCE_MODEL_free(domain_load_t* ressource_data, int max_domain_id)
+void RM_RESSOURCE_MODEL_free(void)
 {
     if(ressource_data != NULL)
     {
@@ -48,7 +40,7 @@ void RM_RESSOURCE_MODEL_free(domain_load_t* ressource_data, int max_domain_id)
     }
 }
 
-double RM_RESSOURCE_MODEL_get_domain_cpuload(domain_load_t* ressource_data, int max_domain_id, int dom_id)
+double RM_RESSOURCE_MODEL_get_domain_cpuload(int dom_id)
 {
     if(ressource_data == NULL)
         return -1;
@@ -59,7 +51,7 @@ double RM_RESSOURCE_MODEL_get_domain_cpuload(domain_load_t* ressource_data, int 
     return ressource_data[dom_id].cpu_load;
 }
 
-double RM_RESSOURCE_MODEL_get_domain_memload(domain_load_t* ressource_data, int max_domain_id, int dom_id)
+double RM_RESSOURCE_MODEL_get_domain_memload(int dom_id)
 {
     if(ressource_data == NULL)
         return -1;
@@ -70,7 +62,7 @@ double RM_RESSOURCE_MODEL_get_domain_memload(domain_load_t* ressource_data, int 
     return ressource_data[dom_id].mem_load;
 }
 
-int RM_RESSOURCE_MODEL_get_domain_priority(domain_load_t* ressource_data, int max_domain_id, int dom_id)
+int RM_RESSOURCE_MODEL_get_domain_priority(int dom_id)
 {
     if(ressource_data == NULL)
         return -1;
@@ -81,7 +73,7 @@ int RM_RESSOURCE_MODEL_get_domain_priority(domain_load_t* ressource_data, int ma
     return ressource_data[dom_id].priority;
 }
 
-int RM_RESSOURCE_MODEL_get_domain_vcpucount(domain_load_t* ressource_data, int max_domain_id, int dom_id)
+int RM_RESSOURCE_MODEL_get_domain_vcpucount(int dom_id)
 {
     if(ressource_data == NULL)
         return -1;
@@ -102,7 +94,7 @@ int64_t RM_RESSOURCE_MODEL_get_used_memory(void)
     return host_memory_used;
 }
 
-int RM_RESSOURCE_MODEL_update(domain_load_t* ressource_data, int max_domain_id, libxl_dominfo* dom_list, int num_domains)
+int RM_RESSOURCE_MODEL_update(libxl_dominfo* dom_list, int num_domains)
 {
     int i, j, priority, vcpu_used;
     int64_t mem_used;
@@ -194,9 +186,9 @@ int RM_RESSOURCE_MODEL_update(domain_load_t* ressource_data, int max_domain_id, 
     return 0;
 }
 
-/*domain_load_t* RM_RESSOURCE_MODEL_get_ressource_data(int* num_entries)
+domain_load_t* RM_RESSOURCE_MODEL_get_ressource_data(int* num_entries)
 {
     *num_entries = max_domain_id + 1;
     return ressource_data;
-}*/
+}
 

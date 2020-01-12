@@ -28,12 +28,12 @@ typedef struct domain_load domain_load_t;
  *
  * Returns 0 if initialization was successful and -1 if not
  */
-domain_load_t* RM_RESSOURCE_MODEL_init(int* max_domain_id);
+int RM_RESSOURCE_MODEL_init(void);
 
 /**
  * Frees the struct containing the ressource data for all domains
  */
-void RM_RESSOURCE_MODEL_free(domain_load_t* ressource_data, int max_domain_id);
+void RM_RESSOURCE_MODEL_free(void);
 
 /**
  * Returns the current cpu load of a domain
@@ -42,7 +42,7 @@ void RM_RESSOURCE_MODEL_free(domain_load_t* ressource_data, int max_domain_id);
  * Returns load in percent (0.00 - 100.00) or -1
  * Parameted dom_id id of domain
  */
-double RM_RESSOURCE_MODEL_get_domain_cpuload(domain_load_t* ressource_data, int max_domain_id, int dom_id);
+double RM_RESSOURCE_MODEL_get_domain_cpuload(int dom_id);
 
 /**
  * Returns the current memory load of a domain
@@ -51,7 +51,7 @@ double RM_RESSOURCE_MODEL_get_domain_cpuload(domain_load_t* ressource_data, int 
  * Returns load in percent (0.00 - 100.00) or -1
  * Parameted dom_id id of domain
  */
-double RM_RESSOURCE_MODEL_get_domain_memload(domain_load_t* ressource_data, int max_domain_id, int dom_id);
+double RM_RESSOURCE_MODEL_get_domain_memload(int dom_id);
 
 /**
  * Returns the priority of a domain
@@ -60,14 +60,14 @@ double RM_RESSOURCE_MODEL_get_domain_memload(domain_load_t* ressource_data, int 
  * Returns priority from 1 (low) to 5 (high)
  * Parameter dom_id id of domain
  */
-int RM_RESSOURCE_MODEL_get_domain_priority(domain_load_t* ressource_data, int max_domain_id, int dom_id);
+int RM_RESSOURCE_MODEL_get_domain_priority(int dom_id);
 
 /**
  * Returns the number of currently online vCPUs of a domain
  * Returns -1 if the given id belongs to no active domain
  * Parameter dom_id is the if of the domain
  */
-int RM_RESSOURCE_MODEL_get_domain_vcpucount(domain_load_t* ressource_data, int max_domain_id, int dom_id);
+int RM_RESSOURCE_MODEL_get_domain_vcpucount(int dom_id);
 
 /**
  * Returns the currently used physical cpus by domains
@@ -87,13 +87,13 @@ int64_t RM_RESSOURCE_MODEL_get_used_memory(void);
  * Parameter dom_list array with all a libxl_dominfo structure per running domain
  * Parameter num_domains length of dom_list
  */
-int RM_RESSOURCE_MODEL_update(domain_load_t* ressource_data, int max_domain_id, libxl_dominfo* dom_list, int num_domains);
+int RM_RESSOURCE_MODEL_update(libxl_dominfo* dom_list, int num_domains);
 
 /**
  * Returns a pointer to the static array containing the ressource load data of the domains
  * Parameter num_entries pointer in which the number of entries in the ressource load array is written
  */
-//domain_load_t* RM_RESSOURCE_MODEL_get_ressource_data(int* num_entries);
+domain_load_t* RM_RESSOURCE_MODEL_get_ressource_data(int* num_entries);
 
 #endif
 
