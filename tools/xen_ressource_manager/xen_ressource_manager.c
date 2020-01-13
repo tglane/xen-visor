@@ -12,6 +12,10 @@
 #include <rm_allocator.h>
 #include <rm_numa_manager.h>
 
+#ifdef RM_NOT_AS_DAEMON
+#define syslog(priority, ...) printf(__VA_ARGS__)
+#endif
+
 int compare_domains_by_cpuload(const void* a, const void* b)
 {
     libxl_dominfo* first = (libxl_dominfo*) a;
@@ -99,7 +103,9 @@ void close_handle(void)
     RM_XENSTORE_close();
     RM_XL_close();
 
+#ifndef RM_NOT_AS_DAEMON
     closelog();
+#endif
 }
 
 int main_ressource_manager(void)
@@ -180,8 +186,10 @@ int main_ressource_manager(void)
 int main(void)
 {
 
+#ifndef RM_NOT_AS_DAEMON
     if(init_daemon() < 0)
         exit(EXIT_FAILURE);
+#endif
 
     if(init_handle() < 0)
         exit(EXIT_FAILURE);

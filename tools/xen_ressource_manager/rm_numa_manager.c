@@ -2,6 +2,10 @@
 
 #include <syslog.h>
 
+#ifdef RM_NOT_AS_DAEMON
+#define syslog(priority, ...) printf(__VA_ARGS__)
+#endif
+
 /**
  * Structure containing the physical info regarding memory and CPUs and memory of a NUMA node
  */

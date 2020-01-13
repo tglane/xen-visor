@@ -28,7 +28,7 @@ do
         CPU_STATE_FILE="${CPU_DIR}/online"
 
         if [ -f "${CPU_STATE_FILE}" ]; then
-            if ! [grep -qx 1 "${CPU_STATE_FILE}"]; then
+            if ! ["grep -qx 1 "${CPU_STATE_FILE}""]; then
                 echo 1 > "${CPU_STATE_FILE}"
             fi
         fi

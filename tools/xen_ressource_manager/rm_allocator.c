@@ -3,6 +3,10 @@
 #include <syslog.h>
 #include <rm_xl.h>
 
+#ifdef RM_NOT_AS_DAEMON
+#define syslog(priority, ...) printf(__VA_ARGS__)
+#endif
+
 static int RM_ALLOCATOR_resolve_cpu_allocations(libxl_dominfo* dom_list, domain_load_t* dom_load, int num_domains);
 
 static int RM_ALLOCATOR_resolve_mem_allocations(libxl_dominfo* dom_list, domain_load_t* dom_load, int num_domains);
