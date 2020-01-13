@@ -140,6 +140,7 @@ int RM_XL_pin_vcpu(int dom_id, int vcpu_id, int pcpu_id, int pin_type)
     if(pin_type == VCPU_PIN_HARD)
     {
         libxl_bitmap_set(&hard_affinity, pcpu_id);
+        libxl_bitmap_set(&soft_affinity, pcpu_id);
     }
     else if(pin_type == VCPU_PIN_SOFT)
     {
