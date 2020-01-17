@@ -114,7 +114,7 @@ int RM_ALLOCATOR_allocation_ask(domain_load_t* domain, libxl_dominfo dom_info)
 
 int RM_ALLOCATOR_ressource_adjustment(libxl_dominfo* dom_list, domain_load_t* dom_load, int num_domains)
 {
-    int i;
+    int i, rc = 1;
 
     syslog(LOG_NOTICE, "### Ressource adjustment ###\n");
     syslog(LOG_NOTICE, "Host CPUs: %d\n", RM_XL_get_host_cpu());
@@ -148,6 +148,8 @@ int RM_ALLOCATOR_ressource_adjustment(libxl_dominfo* dom_list, domain_load_t* do
                     syslog(LOG_NOTICE, "direct CPU_REDUCE for id: %d; vcpu_id: %d\n", dom_list[i].domid, vcpu_removed);
                     dom_load[dom_list[i].domid].vcpu_used = dom_list[i].vcpu_online - 1;
                     dom_load[dom_list[i].domid].vcpu_info[vcpu_removed].online = false;
+                    
+                    rc = 0;
                 }
             }
             else if(alloc_ask[dom_list[i].domid].cpu_ask > 0 && dom_load[dom_list[i].domid].dom_id > -1)
@@ -160,13 +162,15 @@ int RM_ALLOCATOR_ressource_adjustment(libxl_dominfo* dom_list, domain_load_t* do
                     syslog(LOG_NOTICE, "direct CPU_ADD for id: %d; vcpu_id: %d\n", dom_list[i].domid, vcpu_added);
                     dom_load[dom_list[i].domid].vcpu_used = dom_list[i].vcpu_online + 1;
                     dom_load[dom_list[i].domid].vcpu_info[vcpu_added].online = true;
+                    
+                    rc = 0;
                 }
             }
         }
     }
     else if(alloc_summary.cpu_add > 0 || alloc_summary.cpu_reduce > 0)
     {
-        RM_ALLOCATOR_resolve_cpu_allocations(dom_list, dom_load, num_domains);
+        rc = RM_ALLOCATOR_resolve_cpu_allocations(dom_list, dom_load, num_domains);
     }
 
     // Resolve MEM allocation
@@ -193,7 +197,7 @@ int RM_ALLOCATOR_ressource_adjustment(libxl_dominfo* dom_list, domain_load_t* do
     }
 
     alloc_summary = (allocation_summary_t) {0, 0, 0, 0};
-    return 0;
+    return rc;
 }
 
 /**
@@ -212,7 +216,7 @@ int RM_ALLOCATOR_ressource_adjustment(libxl_dominfo* dom_list, domain_load_t* do
  */ 
 static int RM_ALLOCATOR_resolve_cpu_allocations(libxl_dominfo* dom_list, domain_load_t* dom_load, int num_domains)
 {
-    int i, free_cpus, num_add = 0, num_standby = 0;
+    int i, free_cpus, num_add = 0, num_standby = 0, rc = 1;
     int* receive_domains;
     int* standby_domains;
 
@@ -282,6 +286,7 @@ static int RM_ALLOCATOR_resolve_cpu_allocations(libxl_dominfo* dom_list, domain_
                 dom_load[receive_domains[i]].vcpu_info[vcpu_added].online = true;
                 free_cpus--;
 
+                rc = 0;
                 syslog(LOG_NOTICE, "ADDED CPU TO: %d; Using a free cpu\n", receive_domains[i]);
             }
         }
@@ -315,6 +320,7 @@ static int RM_ALLOCATOR_resolve_cpu_allocations(libxl_dominfo* dom_list, domain_
 
                         standby_domains[j] = -1;
                         qsort(standby_domains, num_standby, sizeof(int), compare_domains_by_cpuload);
+                        rc = 0;
                     }
 
                     break;
@@ -326,7 +332,8 @@ static int RM_ALLOCATOR_resolve_cpu_allocations(libxl_dominfo* dom_list, domain_
     free(receive_domains);
     if(standby_domains != NULL)
         free(standby_domains);
-    return 0;
+    
+    return rc;
 }
 
 /**
