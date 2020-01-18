@@ -242,7 +242,7 @@ static int RM_ALLOCATOR_resolve_cpu_allocations(libxl_dominfo* dom_list, domain_
         {
             RM_XL_change_vcpu(dom_list[i].domid, alloc_ask[dom_list[i].domid].cpu_ask);
         }
-        else if(alloc_ask[dom_list[i].domid].cpu_ask > 0)
+        else if(alloc_ask[dom_list[i].domid].cpu_ask > 0 && RM_RESSOURCE_MODEL_get_domain_cpuload(dom_list[i].domid) > 95)
         {
             int j;
             
@@ -254,10 +254,9 @@ static int RM_ALLOCATOR_resolve_cpu_allocations(libxl_dominfo* dom_list, domain_
             receive_domains[j + 1] = dom_list[i].domid;
             num_add++;
         }
-        else if(alloc_ask[dom_list[i].domid].cpu_ask > -1 && dom_list[i].vcpu_online > 1 && free_cpus < alloc_summary.cpu_add)
+        else if(alloc_ask[dom_list[i].domid].cpu_ask > -1&& dom_list[i].vcpu_online > 1 && free_cpus < alloc_summary.cpu_add)
         {
             int j;
-
             for(j = num_standby; (j >= 0 && (RM_RESSOURCE_MODEL_get_domain_cpuload(standby_domains[j]) > dom_load[dom_list[i].domid].cpu_load 
                 || RM_RESSOURCE_MODEL_get_domain_cpuload(standby_domains[j]) == -1)); j--)
             {
@@ -376,7 +375,7 @@ static int RM_ALLOCATOR_resolve_mem_allocations(libxl_dominfo* dom_list, domain_
         {
             RM_XL_change_memory(dom_list[i].domid, alloc_ask[dom_list[i].domid].mem_ask);
         }
-        else if(alloc_ask[dom_list[i].domid].mem_ask > 0)
+        else if(alloc_ask[dom_list[i].domid].mem_ask > 0 && RM_RESSOURCE_MODEL_get_domain_memload(dom_list[i].domid) > 90)
         {
             int j;
             
@@ -388,7 +387,7 @@ static int RM_ALLOCATOR_resolve_mem_allocations(libxl_dominfo* dom_list, domain_
             receive_domains[j + 1] = dom_list[i].domid;
             num_add++;
         }
-        else if(alloc_ask[dom_list[i].domid].mem_ask == 0 && domain_mem - MEM_STEP >= DOMAIN_MIN_MEM && free_mem < alloc_summary.mem_add)
+        else if(alloc_ask[dom_list[i].domid].mem_ask > -1 && domain_mem - MEM_STEP >= DOMAIN_MIN_MEM && free_mem < alloc_summary.mem_add)
         {
             int j;
             
