@@ -65,9 +65,16 @@ int RM_RESSOURCE_MODEL_get_domain_priority(int dom_id);
 /**
  * Returns the number of currently online vCPUs of a domain
  * Returns -1 if the given id belongs to no active domain
- * Parameter dom_id is the if of the domain
+ * Parameter dom_id is the id of the domain
  */
 int RM_RESSOURCE_MODEL_get_domain_vcpucount(int dom_id);
+
+/**
+ * Returns the number of kb memory currently addressed to a given domain
+ * Returns -1 if the given id belongs to no active domain
+ * Parameter dom_id is the id of the domains
+ */
+int64_t RM_RESSOURCE_MODEL_get_domain_memuseage(int dom_id);
 
 /**
  * Returns the currently used physical cpus by domains

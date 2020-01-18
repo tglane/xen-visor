@@ -84,6 +84,18 @@ int RM_RESSOURCE_MODEL_get_domain_vcpucount(int dom_id)
     return ressource_data[dom_id].vcpu_used;
 }
 
+int64_t RM_RESSOURCE_MODEL_get_domain_memuseage(int dom_id)
+{
+    if(ressource_data == NULL)
+        return -1;
+
+    
+    if(dom_id < 0 || dom_id > max_domain_id || ressource_data[dom_id].dom_id == -1)
+        return -1;
+
+    return ressource_data[dom_id].mem_used;
+}
+
 int RM_RESSOURCE_MODEL_get_used_cpus(void)
 {
     return host_cpus_used;

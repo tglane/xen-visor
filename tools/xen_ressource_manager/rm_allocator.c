@@ -37,28 +37,56 @@ static allocation_ask_t* alloc_ask;
 static unsigned int num_domains = 0;
 static allocation_summary_t alloc_summary = (allocation_summary_t) {0, 0, 0, 0};
 
-static int compare_domains_by_cpuload(const void* a, const void* b)
+static int compare_domains_by_cpuload_low(const void* a, const void* b)
 {
     double first_load = RM_RESSOURCE_MODEL_get_domain_cpuload(*(int*) a), sec_load = RM_RESSOURCE_MODEL_get_domain_cpuload(*(int*) b);
+    int first_cpu = RM_RESSOURCE_MODEL_get_domain_vcpucount(*(int*) a), sec_cpu = RM_RESSOURCE_MODEL_get_domain_vcpucount(*(int*) b);
 
     if(first_load == -1)
         return 1;
     else if(sec_load == -1)
         return -1;
     else
-        return first_load - sec_load;
+        return (first_load / first_cpu) - (sec_load / sec_cpu);
 }
 
-static int compare_domains_by_memload(const void* a, const void* b)
+static int compare_domains_by_cpuload_high(const void* a, const void* b)
 {
-    double first_load = RM_RESSOURCE_MODEL_get_domain_memload(*(int*) a), sec_load = RM_RESSOURCE_MODEL_get_domain_memload(*(int*) b);
+    double first_load = RM_RESSOURCE_MODEL_get_domain_cpuload(*(int*) a), sec_load = RM_RESSOURCE_MODEL_get_domain_cpuload(*(int*) b);
+    int first_cpu = RM_RESSOURCE_MODEL_get_domain_vcpucount(*(int*) a), sec_cpu = RM_RESSOURCE_MODEL_get_domain_vcpucount(*(int*) b);
 
     if(first_load == -1)
         return 1;
     else if(sec_load == -1)
         return -1;
     else
-        return first_load - sec_load;    
+        return (sec_load / sec_cpu) - (first_load / first_cpu); 
+}
+
+static int compare_domains_by_memload_low(const void* a, const void* b)
+{
+    double first_load = RM_RESSOURCE_MODEL_get_domain_memload(*(int*) a), sec_load = RM_RESSOURCE_MODEL_get_domain_memload(*(int*) b);
+    int64_t first_mem = RM_RESSOURCE_MODEL_get_domain_memuseage(*(int*) a), sec_mem  = RM_RESSOURCE_MODEL_get_domain_memuseage(*(int*) b);
+
+    if(first_load == -1)
+        return 1;
+    else if(sec_load == -1)
+        return -1;
+    else
+        return (first_load / first_mem) - (sec_load / sec_mem);
+}
+
+static int compare_domains_by_memload_high(const void* a, const void* b)
+{
+    double first_load = RM_RESSOURCE_MODEL_get_domain_memload(*(int*) a), sec_load = RM_RESSOURCE_MODEL_get_domain_memload(*(int*) b);
+    int64_t first_mem = RM_RESSOURCE_MODEL_get_domain_memuseage(*(int*) a), sec_mem  = RM_RESSOURCE_MODEL_get_domain_memuseage(*(int*) b);
+
+    if(first_load == -1)
+        return 1;
+    else if(sec_load == -1)
+        return -1;
+    else
+        return (sec_load / sec_mem) - (first_load / first_mem);
 }
 
 int RM_ALLOCATOR_allocation_ask(domain_load_t* domain, libxl_dominfo dom_info)
@@ -272,7 +300,10 @@ static int RM_ALLOCATOR_resolve_cpu_allocations(libxl_dominfo* dom_list, domain_
     for(i = 0; i < num_standby; i++)
         syslog(LOG_NOTICE, "id: %d\n", standby_domains[i]);
     syslog(LOG_NOTICE, "######################################\n");
-    
+   
+    // Sort receive_domains with load / vcpus_used that high load per core domains get served first
+    qsort(receive_domains, alloc_summary.cpu_add, sizeof(int), compare_domains_by_cpuload_high);
+
     // Give all free CPUs to domains
     for(i = 0; i < alloc_summary.cpu_add; i++)
     {
@@ -319,7 +350,7 @@ static int RM_ALLOCATOR_resolve_cpu_allocations(libxl_dominfo* dom_list, domain_
                         }
 
                         standby_domains[j] = -1;
-                        qsort(standby_domains, num_standby, sizeof(int), compare_domains_by_cpuload);
+                        qsort(standby_domains, num_standby, sizeof(int), compare_domains_by_cpuload_low);
                         rc = 0;
                     }
 
@@ -407,6 +438,9 @@ static int RM_ALLOCATOR_resolve_mem_allocations(libxl_dominfo* dom_list, domain_
         syslog(LOG_NOTICE, "id: %d\n", standby_domains[i]);
     syslog(LOG_NOTICE, "######################################\n");
 
+    // Sort receive domains with memload per mem_usage
+    qsort(receive_domains, alloc_summary.mem_add, sizeof(int), compare_domains_by_memload_high);
+
     // Give all available MEM to domains that want more
     for(i = 0; i < alloc_summary.mem_add; i++)
     {
@@ -444,7 +478,7 @@ static int RM_ALLOCATOR_resolve_mem_allocations(libxl_dominfo* dom_list, domain_
                         }
 
                         standby_domains[j] = -1;
-                        qsort(standby_domains, num_standby, sizeof(int), compare_domains_by_memload);
+                        qsort(standby_domains, num_standby, sizeof(int), compare_domains_by_memload_low);
                     }
 
                     break;
