@@ -12,6 +12,7 @@
 #include <rm_allocator.h>
 #include <rm_numa_manager.h>
 
+#define RM_NOT_AS_DAEMON
 #ifdef RM_NOT_AS_DAEMON
 #define syslog(priority, ...) printf(__VA_ARGS__)
 #endif
@@ -22,7 +23,10 @@ int compare_domains_by_cpuload(const void* a, const void* b)
     libxl_dominfo* sec = (libxl_dominfo*) b;
     double first_load = RM_RESSOURCE_MODEL_get_domain_cpuload(first->domid);
     double sec_load = RM_RESSOURCE_MODEL_get_domain_cpuload(sec->domid);
- 
+
+    //int first_vcpus = RM_RESSOURCE_MODEL_get_domain_vcpucount(first->domid);
+    //int sec_vcpus = RM_RESSOURCE_MODEL_get_domain_vcpucount(sec->domid); 
+
     if(first->vcpu_online == 1) return 1;
     else if(sec->vcpu_online == 1) return -1; 
     else return first_load - sec_load;
@@ -132,7 +136,12 @@ int main_ressource_manager(void)
 
         qsort(s_dom_list, num_domains, sizeof(libxl_dominfo), compare_domains_by_cpuload);
 
-        for(i = 0; i < oversize; i++)
+        for(i = 0; i < num_domains; i++)
+        {
+            syslog(LOG_NOTICE, "[DEBUG] sorted Domain #%d = id: %d", i, s_dom_list[i].domid);
+        }
+
+        for(i = 0; i < oversize && i < num_domains; i++)
         {
             if(domain_load[s_dom_list[i].domid].dom_id > -1)
             {

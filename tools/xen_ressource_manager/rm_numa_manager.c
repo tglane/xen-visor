@@ -2,6 +2,7 @@
 
 #include <syslog.h>
 
+#define RM_NOT_AS_DAEMON
 #ifdef RM_NOT_AS_DAEMON
 #define syslog(priority, ...) printf(__VA_ARGS__)
 #endif
