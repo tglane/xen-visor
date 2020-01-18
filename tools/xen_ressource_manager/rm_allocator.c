@@ -423,8 +423,6 @@ static int RM_ALLOCATOR_resolve_mem_allocations(libxl_dominfo* dom_list, domain_
                 syslog(LOG_NOTICE, "ADDED MEM TO: %d; Using free mem\n", receive_domains[i]);
             }
         }
-        else if(RM_RESSOURCE_MODEL_get_domain_memload(receive_domains[i]) > (105 - (RM_RESSOURCE_MODEL_get_domain_priority(receive_domains[i]) * 5))
-                && standby_domains != NULL)
         else if(RM_RESSOURCE_MODEL_get_domain_memload(receive_domains[i]) > 80 && standby_domains != NULL)
         {
             int j; 
