@@ -117,18 +117,18 @@ int RM_RESSOURCE_MODEL_update(libxl_dominfo* dom_list, int num_domains)
         return -1;
     }
 
-    if(dom_list[num_domains].domid > max_domain_id)
+    // Realloc memory for ressource_data if max_domain_id is lower than current num _domains
+    if(dom_list[num_domains - 1].domid > max_domain_id)
     {
-        // Realloc memory for ressource_data if max_domain_id is lower than current num _domains
-        ressource_data = realloc(ressource_data, (dom_list[num_domains].domid + 1) * sizeof(domain_load_t));
+        ressource_data = realloc(ressource_data, (dom_list[num_domains - 1].domid + 1) * sizeof(domain_load_t));
         if(ressource_data == NULL)
             return -1;
 
-        for(j = max_domain_id + 1; j <= dom_list[num_domains].domid; j++)
+        for(j = max_domain_id + 1; j <= dom_list[num_domains - 1].domid; j++)
         {
             ressource_data[j] = (domain_load_t) {-1, -1, 0, 0, NULL, 0, -1.0, -1.0};
         }
-        max_domain_id = dom_list[num_domains].domid;
+        max_domain_id = dom_list[num_domains - 1].domid;
     }
 
     host_cpus_used = 0;
@@ -136,20 +136,6 @@ int RM_RESSOURCE_MODEL_update(libxl_dominfo* dom_list, int num_domains)
 
     for(i = 0; i < num_domains; i++)
     {
-        // Realloc memory for ressource_data if max_domain_id is lower than current id
-        /*if(dom_list[i].domid > max_domain_id)
-        {
-            ressource_data = realloc(ressource_data, (dom_list[i].domid + 1) * sizeof(domain_load_t));
-            if(ressource_data == NULL)
-                return -1;
-            
-            for(j = max_domain_id + 1; j <= dom_list[i].domid; j++)
-            {
-                ressource_data[j] = (domain_load_t) {-1, -1, 0, 0, NULL, 0, -1.0, -1.0};
-            }
-            max_domain_id = dom_list[i].domid;
-        }*/
-
         memload = RM_XENSTORE_read_domain_memload(dom_list[i].domid);
         cpuload = RM_XENSTORE_read_domain_cpuload(dom_list[i].domid); 
         priority = RM_XENSTORE_read_domain_priority(dom_list[i].domid);
