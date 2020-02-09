@@ -174,17 +174,14 @@ int main_ressource_manager(void)
 
     syslog(LOG_NOTICE, "num_domains: %d; num_entries: %d\n", num_domains, num_entries);
     // Allocation asks and adjustments
-    if(num_domains <= num_entries)
+    for(i = 0; i < num_domains; i++)
     {
-        for(i = 0; i < num_domains; i++)
-        {
-            if(domain_load[dom_list[i].domid].dom_id >= 0)
-                RM_ALLOCATOR_allocation_ask(&domain_load[dom_list[i].domid], dom_list[i]);
-        }
-
-        if(RM_ALLOCATOR_ressource_adjustment(dom_list, domain_load, num_domains) == 0 || allocation_change == 1)
-            RM_NUMA_MANAGER_update_vcpu_placing(dom_list, s_dom_list, domain_load, num_domains);
+        if(domain_load[dom_list[i].domid].dom_id >= 0)
+            RM_ALLOCATOR_allocation_ask(&domain_load[dom_list[i].domid], dom_list[i]);
     }
+
+    if(RM_ALLOCATOR_ressource_adjustment(dom_list, domain_load, num_domains) == 0 || allocation_change == 1)
+        RM_NUMA_MANAGER_update_vcpu_placing(dom_list, s_dom_list, domain_load, num_domains);
 
     syslog(LOG_NOTICE, "\n");
 
