@@ -38,12 +38,10 @@
 #include <xsm/xsm.h>
 #include <xen/err.h>
 
-#include <public/domctl.h> // include to calc domain load via getdomaininfo() (maybe not necessary)
+#include <xen/resource_management.h>
 
-/* time stamp in ns from last domain schedule */
-static unsigned long last_domain_cpu_time = 0;
-static s_time_t last_timestamp = 0;
-
+/* static resource_model struct pointing to the resource load data */
+static struct resource_model* resource_model;
 
 /* opt_sched: scheduler - default to configured value */
 static char __initdata opt_sched[10] = CONFIG_SCHED_DEFAULT;
@@ -1487,68 +1485,6 @@ static void vcpu_periodic_timer_work(struct vcpu *v)
     set_timer(&v->periodic_timer, periodic_next_event);
 }
 
-/**
- * Calculate cpu load percentage of a domains vcpus
- * Author: timo.glane@gmail.com
- */
-static s_time_t calc_domain_vcpu_pct(struct domain* curr, s_time_t now)
-{
-    /* tools/xenstat/xentop/xentop.c::get_cpu_pct(...) */
-    struct xen_domctl_getdomaininfo curr_info;
-    s_time_t ns_elapsed;
-    s_time_t pct;
-	
-    if(curr == NULL) return 0;
-   
-    // Check if domain is idle domain
-    if(!is_idle_domain(curr) && is_pv_domain(curr))
-    {
-        getdomaininfo(curr, &curr_info);
-
-        ns_elapsed = now - last_timestamp;
-
-        printk(" [DEBUG] 1 domain %d cpu_time: %ld\n", curr->domain_id, curr_info.cpu_time);
-        printk(" [DEBUG] 2 domain cpu_time: %ld\n", last_domain_cpu_time);
-        printk(" [DEBUG] Time elapsed: %ld\n", ns_elapsed);
-
-        pct = ((curr_info.cpu_time - last_domain_cpu_time) * 100) / ns_elapsed;
-
-        last_domain_cpu_time = curr_info.cpu_time;
-
-        return pct;
-    }
-    else
-    {
-	    return 0;
-    }
-
-}
-
-/**
- * Update entry of currently scheduled domain in data structure containing last load status of each domain
- * Author: timo.glane@gmail.com
- */
-static void update_domain_ressource_load(struct domain* curr, s_time_t pct, uint64_t mem_load)
-{
-    // TODO implement data structure to store load of cpu and memory usage AND update the structure with values pct and mem_load
-}
-
-/**
- * Calculate memory load of a domain
- * Author: timo.glane@gmail.comd
- */
-static uint64_t calc_domain_curr_mem_load(struct domain* curr)
-{
-    struct xen_domctl_getdomaininfo curr_info;
-
-    if(curr == NULL) return 0;
-
-    getdomaininfo(curr, &curr_info);
-    
-    // return curr->tot_pages * curr->handle->page_size
-    return curr_info.tot_pages * PAGE_SIZE;
-
-}
 
 /*
  * The main function
@@ -1568,8 +1504,6 @@ static void schedule(void)
     int cpu = smp_processor_id();
     struct domain *domain;
     uint8_t current_node, last_node;
-    s_time_t domain_pct;
-    uint64_t domain_mem_load;
 
     ASSERT_NOT_IN_ATOMIC();
 
@@ -1668,21 +1602,10 @@ static void schedule(void)
 
     domain = next->domain;
 
-    /*** Update vcpu and mem load of current domain but check for idle domain first ***/
-    if(!is_idle_domain(prev->domain) && is_pv_domain(prev->domain))
-    {
-        domain_pct = calc_domain_vcpu_pct(prev->domain, now);
-        printk(" [DEBUG] domain_pct: %ld\n", domain_pct);        
-            
-        domain_mem_load = calc_domain_curr_mem_load(prev->domain);
-        printk(" [DEBUG] domain_mem_load: %ld\n", domain_mem_load);
-    
-    	update_domain_ressource_load(prev->domain, domain_pct, domain_mem_load);
-    	last_timestamp = now;
-    }
+    /* Update resource model and adjust resource distribution */
+    update_resource_model(resource_model);
 
-
-    /*** XPV integration ***/
+    /* XPV integration */
     if(domain->domain_id != 0 && !is_idle_domain(domain) && is_pv_domain(domain))
     {
         last_node = shared_info(domain, vcpu_to_pnode)[next->vcpu_id];
@@ -1694,7 +1617,6 @@ static void schedule(void)
             send_guest_vcpu_virq(next, VIRQ_TOPOLOGY);
         }
     }
-    /*** XPV integration ***/
 
     context_switch(prev, next);
 }
